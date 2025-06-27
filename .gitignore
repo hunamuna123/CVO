@@ -1,10 +1,8 @@
 Frontend/node_modules/
-Frontend/.nuxt/
 # Nuxt dev/build outputs
 Frontend/.output
 Frontend/.data
 Frontend/.nuxt
-Frontend/.nitro
 Frontend/.cache
 Frontend/dist
 
@@ -24,3 +22,5 @@ Frontend/.idea
 Frontend/.env
 Frontend/.env.*
 Frontend/!.env.example
+
+**/.nuxt/
