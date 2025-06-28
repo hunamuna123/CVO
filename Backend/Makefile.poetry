@@ -1,0 +1,152 @@
+# Poetry Makefile
+# Professional Real Estate API - Development Commands
+
+.PHONY: help install update dev test lint format clean check deploy
+
+# Colors for output
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+BLUE := \033[0;34m
+PURPLE := \033[0;35m
+CYAN := \033[0;36m
+WHITE := \033[0;37m
+RESET := \033[0m
+
+help: ## Show this help message
+	@echo "$(CYAN)Real Estate API - Poetry Commands$(RESET)"
+	@echo "$(YELLOW)Usage: make [command]$(RESET)"
+	@echo ""
+	@echo "$(GREEN)Setup Commands:$(RESET)"
+	@grep -E '^install|^update|^init-project' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-15s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Development Commands:$(RESET)"
+	@grep -E '^dev|^test|^lint|^format|^check' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-15s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Database Commands:$(RESET)"
+	@grep -E '^migrate|^seed|^init-db' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-15s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Utility Commands:$(RESET)"
+	@grep -E '^clean|^build|^docker|^logs' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-15s$(RESET) %s\n", $$1, $$2}'
+
+install: ## Install all dependencies with Poetry
+	@echo "$(GREEN)📦 Installing dependencies with Poetry...$(RESET)"
+	poetry install --with dev
+	@echo "$(GREEN)✅ Dependencies installed successfully$(RESET)"
+
+update: ## Update all dependencies
+	@echo "$(YELLOW)🔄 Updating dependencies...$(RESET)"
+	poetry update
+	poetry export -f requirements.txt --output requirements.txt --without-hashes
+	poetry export -f requirements.txt --output requirements-dev.txt --with dev --without-hashes
+	@echo "$(GREEN)✅ Dependencies updated$(RESET)"
+
+init-project: ## Initialize new development environment
+	@echo "$(PURPLE)🚀 Initializing development environment...$(RESET)"
+	make install
+	poetry run pre-commit install
+	@echo "$(GREEN)✅ Project initialized! Ready for development$(RESET)"
+
+dev: ## Start development server with hot reload
+	@echo "$(CYAN)🚀 Starting development server...$(RESET)"
+	poetry run dev
+
+start: ## Start production server
+	@echo "$(CYAN)🚀 Starting production server...$(RESET)"
+	poetry run start
+
+test: ## Run tests with coverage
+	@echo "$(YELLOW)🧪 Running tests...$(RESET)"
+	poetry run test
+
+test-watch: ## Run tests in watch mode
+	@echo "$(YELLOW)👀 Running tests in watch mode...$(RESET)"
+	poetry run pytest --cov=app --cov-report=term-missing -f
+
+lint: ## Run linting (flake8, mypy)
+	@echo "$(BLUE)🔍 Running linting...$(RESET)"
+	poetry run lint
+
+format: ## Format code (black, isort)
+	@echo "$(PURPLE)✨ Formatting code...$(RESET)"
+	poetry run format
+
+check: ## Run all checks (format, lint, test)
+	@echo "$(CYAN)🔍 Running all checks...$(RESET)"
+	poetry run check-all
+
+migrate: ## Run database migrations
+	@echo "$(GREEN)🗄️ Running migrations...$(RESET)"
+	poetry run migrate
+
+seed: ## Seed database with sample data
+	@echo "$(GREEN)🌱 Seeding database...$(RESET)"
+	poetry run seed
+
+init-db: ## Initialize database (migrate + seed)
+	@echo "$(GREEN)🗄️ Initializing database...$(RESET)"
+	poetry run init-db
+
+clean: ## Clean build artifacts and cache
+	@echo "$(RED)🧹 Cleaning up...$(RESET)"
+	poetry run clean
+
+build: ## Build the application
+	@echo "$(BLUE)🏗️ Building application...$(RESET)"
+	poetry run build
+
+shell: ## Open Poetry shell
+	@echo "$(CYAN)🐚 Opening Poetry shell...$(RESET)"
+	poetry shell
+
+show-deps: ## Show dependency tree
+	@echo "$(CYAN)📋 Dependency tree:$(RESET)"
+	poetry show --tree
+
+check-deps: ## Check for dependency vulnerabilities
+	@echo "$(YELLOW)🔍 Checking dependencies for vulnerabilities...$(RESET)"
+	poetry audit
+
+export-deps: ## Export requirements files
+	@echo "$(BLUE)📋 Exporting requirements...$(RESET)"
+	poetry run requirements
+
+logs: ## Show application logs
+	@echo "$(CYAN)📋 Showing logs...$(RESET)"
+	poetry run show-logs
+
+docker-build: ## Build Docker image
+	@echo "$(BLUE)🐳 Building Docker image...$(RESET)"
+	docker build -t realestate-api .
+
+docker-run: ## Run Docker container
+	@echo "$(BLUE)🐳 Running Docker container...$(RESET)"
+	docker run -p 8000:8000 --env-file .env realestate-api
+
+docker-compose-up: ## Start services with docker-compose
+	@echo "$(BLUE)🐳 Starting services...$(RESET)"
+	docker-compose up -d
+
+docker-compose-down: ## Stop services
+	@echo "$(BLUE)🐳 Stopping services...$(RESET)"
+	docker-compose down
+
+info: ## Show project information
+	@echo "$(CYAN)ℹ️  Project Information:$(RESET)"
+	@echo "$(YELLOW)Name:$(RESET) $$(poetry version | cut -d' ' -f1)"
+	@echo "$(YELLOW)Version:$(RESET) $$(poetry version | cut -d' ' -f2)"
+	@echo "$(YELLOW)Python Version:$(RESET) $$(poetry env info --python)"
+	@echo "$(YELLOW)Virtual Environment:$(RESET) $$(poetry env info --path)"
+	@echo "$(YELLOW)Dependencies:$(RESET) $$(poetry show | wc -l) packages"
+
+deploy-check: ## Pre-deployment checks
+	@echo "$(PURPLE)🚀 Running pre-deployment checks...$(RESET)"
+	@echo "$(YELLOW)1. Formatting code...$(RESET)"
+	poetry run format
+	@echo "$(YELLOW)2. Running linting...$(RESET)"
+	poetry run lint
+	@echo "$(YELLOW)3. Running tests...$(RESET)"
+	poetry run test
+	@echo "$(YELLOW)4. Building application...$(RESET)"
+	poetry run build
+	@echo "$(GREEN)✅ All pre-deployment checks passed!$(RESET)"

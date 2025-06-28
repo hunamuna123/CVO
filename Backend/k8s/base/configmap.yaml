@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: realestate
+data:
+  APP_NAME: "Real Estate API"
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  DATABASE_POOL_SIZE: "10"
+  DATABASE_MAX_OVERFLOW: "20"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+  REFRESH_TOKEN_EXPIRE_DAYS: "7"
+  RATE_LIMIT_AUTHENTICATED: "100/minute"
+  RATE_LIMIT_ANONYMOUS: "20/minute"
+  CACHE_TTL: "300"
+  QUERY_CACHE_TTL: "60"

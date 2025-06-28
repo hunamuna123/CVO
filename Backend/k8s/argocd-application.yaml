@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: realestate-api
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/yourproject/realestate-api.git
+    targetRevision: main
+    path: k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: realestate
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

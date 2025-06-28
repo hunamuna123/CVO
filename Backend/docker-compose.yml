@@ -1,0 +1,136 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/realestate
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - SMS_API_KEY=your-sms-api-key
+      - ENVIRONMENT=development
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - realestate-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: realestate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - realestate-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - realestate-network
+
+  celery:
+    build:
+      context: .
+      target: development
+    command: poetry run celery -A app.core.celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/realestate
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - SMS_API_KEY=your-sms-api-key
+      - ENVIRONMENT=development
+    volumes:
+      - ./app:/app/app
+      - ./media:/app/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - realestate-network
+
+  celery-beat:
+    build:
+      context: .
+      target: development
+    command: poetry run celery -A app.core.celery beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/realestate
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - ENVIRONMENT=development
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      - db
+      - redis
+    networks:
+      - realestate-network
+
+  flower:
+    build:
+      context: .
+      target: development
+    command: poetry run celery -A app.core.celery flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/realestate
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+    depends_on:
+      - redis
+    networks:
+      - realestate-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./media:/var/www/media
+    depends_on:
+      - api
+    networks:
+      - realestate-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  realestate-network:
+    driver: bridge
