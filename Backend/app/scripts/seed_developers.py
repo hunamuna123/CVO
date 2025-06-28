@@ -1,5 +1,5 @@
 """
-Seed script for creating sample developers based on the template site.
+Seed script for creating sample developers.
 """
 
 import asyncio
@@ -13,12 +13,12 @@ from app.models.developer import VerificationStatus
 
 
 async def seed_developers():
-    """Create sample developers based on the template site."""
+    """Create sample developers."""
 
     await create_db_connection()
 
     async for db in get_async_session():
-        # Sample developers from the template site
+        # Sample developers.
         developers_data = [
             {
                 "user": {
@@ -39,7 +39,7 @@ async def seed_developers():
                     "contact_phone": "+74951234567",
                     "contact_email": "info@pik.ru",
                     "website": "https://pik.ru",
-                    "description": "Крупнейший девелопер России, специализирующийся на жилой недвижимости премиум и комфорт-класса",
+                    "description": "Крупнейший застройщик России, специализирующийся на жилой недвижимости премиум и комфорт-класса",
                     "rating": Decimal("4.8"),
                     "reviews_count": 156,
                     "is_verified": True,
