@@ -1,0 +1,97 @@
+stages:
+  - test
+  - build
+  - deploy-dev
+  - deploy-staging
+  - deploy-prod
+
+variables:
+  DOCKER_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  KUBECONFIG: /tmp/kubeconfig
+
+# Test stage
+test:
+  stage: test
+  image: python:3.13
+  before_script:
+    - pip install poetry
+    - poetry install
+  script:
+    - poetry run pytest --cov=app --cov-report=xml
+    - poetry run black --check app/
+    - poetry run isort --check-only app/
+    - poetry run flake8 app/
+    - poetry run mypy app/
+  coverage: '/TOTAL.+?(\d+\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Build Docker image
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+  only:
+    - main
+    - develop
+    - tags
+
+# Deploy to development
+deploy-dev:
+  stage: deploy-dev
+  image: bitnami/kubectl:latest
+  environment:
+    name: development
+    url: https://api-dev.realestate.com
+  before_script:
+    - echo $KUBECONFIG_DEV | base64 -d > $KUBECONFIG
+  script:
+    - kubectl set image deployment/api api=$DOCKER_IMAGE -n realestate-dev
+    - kubectl rollout status deployment/api -n realestate-dev
+  only:
+    - develop
+
+# Deploy to staging
+deploy-staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  environment:
+    name: staging
+    url: https://api-staging.realestate.com
+  before_script:
+    - echo $KUBECONFIG_STAGING | base64 -d > $KUBECONFIG
+  script:
+    - kubectl set image deployment/api api=$DOCKER_IMAGE -n realestate-staging
+    - kubectl rollout status deployment/api -n realestate-staging
+  only:
+    - main
+  when: manual
+
+# Deploy to production
+deploy-prod:
+  stage: deploy-prod
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+    url: https://api.realestate.com
+  before_script:
+    - echo $KUBECONFIG_PROD | base64 -d > $KUBECONFIG
+  script:
+    - kubectl set image deployment/api api=$DOCKER_IMAGE -n realestate-prod
+    - kubectl rollout status deployment/api -n realestate-prod
+  only:
+    - tags
+  when: manual

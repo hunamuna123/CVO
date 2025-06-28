@@ -1,0 +1,31 @@
+[flake8]
+max-line-length = 88
+extend-ignore = 
+    # Black compatibility
+    E203,  # whitespace before ':'
+    E501,  # line too long (handled by black)
+    W503,  # line break before binary operator
+    # FastAPI specific
+    F401,  # imported but unused (common in __init__.py)
+    
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    .tox,
+    dist,
+    build,
+    *.egg,
+    migrations,
+    .eggs,
+    *.egg-info,
+
+per-file-ignores =
+    __init__.py:F401
+    app/models/__init__.py:F401
+    app/schemas/__init__.py:F401
+    app/services/__init__.py:F401
+
+max-complexity = 10
+import-order-style = google
+application-import-names = app
