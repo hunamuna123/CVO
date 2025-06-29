@@ -646,6 +646,11 @@ target/
 *_generated.*
 auto_*
 
+# Large dataset files
+AI/dataset/input_data.csv
+Backend/AI/dataset/input_data.csv
+*.csv
+
 # ========================
 # End of .gitignore
 # ========================
