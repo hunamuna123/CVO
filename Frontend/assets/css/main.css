@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@import "preline/variants.css";
+@source "../../node_modules/preline/dist/*.js";
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 10px white inset !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+html {
+	position: relative;
+	min-height: 100%;
+	height: 100%;
+	overflow: hidden;
+	scroll-behavior: smooth;
+
+}
+
+body {
+	height: 100%;
+	overflow-x: hidden;
+	unicode-bidi: plaintext;
+	translate: no !important;
+}
+
+#__nuxt {
+	height: 100%;
+
+
+}
