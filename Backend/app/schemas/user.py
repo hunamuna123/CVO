@@ -4,6 +4,7 @@ User schemas for profile management.
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -13,7 +14,7 @@ from app.models.user import UserRole
 class UserProfileResponse(BaseModel):
     """User profile response schema."""
 
-    id: str
+    id: UUID
     phone: str
     email: Optional[str] = None
     first_name: str
@@ -49,7 +50,7 @@ class UserAvatarUploadResponse(BaseModel):
 class UserPublicProfileResponse(BaseModel):
     """Public user profile response schema (limited information)."""
 
-    id: str
+    id: UUID
     first_name: str
     last_name: str
     avatar_url: Optional[str] = None

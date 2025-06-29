@@ -53,9 +53,9 @@ class ReviewService:
         query = (
             select(Review)
             .options(
+                selectinload(Review.property_obj),
                 selectinload(Review.user),
                 selectinload(Review.developer),
-                selectinload(Review.property),
             )
         )
 
@@ -110,11 +110,11 @@ class ReviewService:
             )
 
             property_info = None
-            if review.property:
+            if review.property_obj:
                 property_info = PropertyInfo(
-                    id=str(review.property.id),
-                    title=review.property.title,
-                    property_type=review.property.property_type,
+                    id=str(review.property_obj.id),
+                    title=review.property_obj.title,
+                    property_type=review.property_obj.property_type,
                 )
 
             review_responses.append(
@@ -237,9 +237,9 @@ class ReviewService:
         query = (
             select(Review)
             .options(
+                selectinload(Review.property_obj),
                 selectinload(Review.user),
                 selectinload(Review.developer),
-                selectinload(Review.property),
             )
             .where(Review.id == UUID(review_id))
         )
@@ -268,11 +268,11 @@ class ReviewService:
         )
 
         property_info = None
-        if review.property:
+        if review.property_obj:
             property_info = PropertyInfo(
-                id=str(review.property.id),
-                title=review.property.title,
-                property_type=review.property.property_type,
+                id=str(review.property_obj.id),
+                title=review.property_obj.title,
+                property_type=review.property_obj.property_type,
             )
 
         return ReviewResponse(
@@ -541,9 +541,9 @@ class ReviewService:
         query = (
             select(Review)
             .options(
+                selectinload(Review.property_obj),
                 selectinload(Review.user),
                 selectinload(Review.developer),
-                selectinload(Review.property),
             )
             .where(Review.user_id == UUID(user_id))
             .order_by(Review.created_at.desc())
@@ -571,11 +571,11 @@ class ReviewService:
             )
 
             property_info = None
-            if review.property:
+            if review.property_obj:
                 property_info = PropertyInfo(
-                    id=str(review.property.id),
-                    title=review.property.title,
-                    property_type=review.property.property_type,
+                    id=str(review.property_obj.id),
+                    title=review.property_obj.title,
+                    property_type=review.property_obj.property_type,
                 )
 
             review_responses.append(

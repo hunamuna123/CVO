@@ -65,7 +65,7 @@ async def create_lead(
 )
 async def get_developer_leads(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     property_id: Optional[str] = Query(None, description="Filter by property ID"),
     lead_type: Optional[str] = Query(
         None, description="Filter by lead type (CALL_REQUEST, VIEWING, CONSULTATION)"
@@ -274,7 +274,7 @@ async def update_lead_status(
 )
 async def get_my_inquiries(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ) -> List[LeadListResponse]:

@@ -4,6 +4,7 @@ Lead-related Pydantic schemas.
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 import phonenumbers
@@ -43,7 +44,7 @@ class LeadBase(BaseModel):
 class LeadCreateRequest(LeadBase):
     """Schema for creating a lead."""
 
-    property_id: str = Field(..., description="Property UUID")
+    property_id: UUID = Field(..., description="Property UUID")
 
 
 class LeadStatusUpdateRequest(BaseModel):
@@ -67,7 +68,7 @@ class LeadSearchParams(BaseModel):
 
     page: int = Field(1, ge=1)
     limit: int = Field(20, ge=1, le=100)
-    property_id: Optional[str] = None
+    property_id: Optional[UUID] = None
     lead_type: Optional[str] = None
     status: Optional[str] = None
     date_from: Optional[str] = None
@@ -78,7 +79,7 @@ class LeadSearchParams(BaseModel):
 class PropertyInfo(BaseModel):
     """Property information for leads."""
 
-    id: str
+    id: UUID
     title: str
     property_type: str
     price: Optional[float] = None
@@ -89,7 +90,7 @@ class PropertyInfo(BaseModel):
 class UserInfo(BaseModel):
     """User information for leads."""
 
-    id: str
+    id: UUID
     first_name: str
     last_name: str
     email: Optional[str] = None
@@ -98,9 +99,9 @@ class UserInfo(BaseModel):
 class LeadResponse(LeadBase):
     """Schema for lead response."""
 
-    id: str
-    property_id: str
-    user_id: Optional[str]
+    id: UUID
+    property_id: UUID
+    user_id: Optional[UUID]
     status: str
     created_at: datetime
     updated_at: datetime
@@ -116,7 +117,7 @@ class LeadResponse(LeadBase):
 class LeadListResponse(BaseModel):
     """Schema for lead list item."""
 
-    id: str
+    id: UUID
     name: str
     phone: str
     email: Optional[str]

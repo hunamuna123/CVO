@@ -4,6 +4,7 @@ Review-related Pydantic schemas.
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -19,8 +20,8 @@ class ReviewBase(BaseModel):
 class ReviewCreateRequest(ReviewBase):
     """Schema for creating a review."""
 
-    developer_id: str = Field(..., description="Developer UUID")
-    property_id: Optional[str] = Field(None, description="Property UUID (optional)")
+    developer_id: UUID = Field(..., description="Developer UUID")
+    property_id: Optional[UUID] = Field(None, description="Property UUID (optional)")
 
     @field_validator("content")
     @classmethod
@@ -52,8 +53,8 @@ class ReviewSearchParams(BaseModel):
 
     page: int = Field(1, ge=1)
     limit: int = Field(20, ge=1, le=100)
-    developer_id: Optional[str] = None
-    property_id: Optional[str] = None
+    developer_id: Optional[UUID] = None
+    property_id: Optional[UUID] = None
     rating_min: Optional[int] = Field(None, ge=1, le=5)
     rating_max: Optional[int] = Field(None, ge=1, le=5)
     is_verified: Optional[bool] = None
@@ -63,7 +64,7 @@ class ReviewSearchParams(BaseModel):
 class UserInfo(BaseModel):
     """User information for reviews."""
 
-    id: str
+    id: UUID
     first_name: str
     last_name: str
     avatar_url: Optional[str] = None
@@ -72,7 +73,7 @@ class UserInfo(BaseModel):
 class DeveloperInfo(BaseModel):
     """Developer information for reviews."""
 
-    id: str
+    id: UUID
     company_name: str
     logo_url: Optional[str] = None
 
@@ -80,7 +81,7 @@ class DeveloperInfo(BaseModel):
 class PropertyInfo(BaseModel):
     """Property information for reviews."""
 
-    id: str
+    id: UUID
     title: str
     property_type: str
 
@@ -88,10 +89,10 @@ class PropertyInfo(BaseModel):
 class ReviewResponse(ReviewBase):
     """Schema for review response."""
 
-    id: str
-    user_id: str
-    developer_id: str
-    property_id: Optional[str]
+    id: UUID
+    user_id: UUID
+    developer_id: UUID
+    property_id: Optional[UUID]
     is_verified: bool
     created_at: datetime
     updated_at: datetime
@@ -108,7 +109,7 @@ class ReviewResponse(ReviewBase):
 class ReviewListResponse(BaseModel):
     """Schema for review list item."""
 
-    id: str
+    id: UUID
     rating: int
     title: str
     content: str

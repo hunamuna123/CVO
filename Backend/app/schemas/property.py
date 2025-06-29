@@ -2,13 +2,20 @@
 Property schemas for request and response models.
 """
 
+import enum
 from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.property import DealType, PropertyStatus, PropertyType, RenovationType
+
+# Forward reference for circular import
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.schemas.developer import DeveloperListResponse
 
 
 # Base schemas
@@ -24,7 +31,7 @@ class PropertyImageBase(BaseModel):
 class PropertyImageResponse(PropertyImageBase):
     """Property image response schema."""
 
-    id: str
+    id: UUID
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -43,7 +50,7 @@ class PropertyDocumentBase(BaseModel):
 class PropertyDocumentResponse(PropertyDocumentBase):
     """Property document response schema."""
 
-    id: str
+    id: UUID
     is_verified: bool = False
     created_at: datetime
 
@@ -175,7 +182,7 @@ class PropertyStatusUpdateRequest(BaseModel):
 class PropertyListResponse(BaseModel):
     """Property list item response schema."""
 
-    id: str
+    id: UUID
     title: str
     property_type: PropertyType
     deal_type: DealType
@@ -209,7 +216,7 @@ class PropertyListResponse(BaseModel):
     main_image_url: Optional[str] = None
 
     # Developer info
-    developer_id: str
+    developer_id: UUID
     developer_name: str
     developer_verified: bool
 
@@ -223,7 +230,7 @@ class PropertyListResponse(BaseModel):
 class PropertyResponse(BaseModel):
     """Detailed property response schema."""
 
-    id: str
+    id: UUID
     title: str
     description: str
     property_type: PropertyType
@@ -280,7 +287,7 @@ class PropertyResponse(BaseModel):
     documents: List[PropertyDocumentResponse] = []
 
     # Developer info
-    developer_id: str
+    developer_id: UUID
     developer: dict  # Basic developer info
 
     # Timestamps
@@ -288,6 +295,32 @@ class PropertyResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# Enums for property type filter mapping
+class PropertyTypeFilter(str, enum.Enum):
+    """Property type filter enumeration (numeric mapping)."""
+    HOUSE = "0"  # дом
+    APARTMENT = "1"  # квартира
+    COMMERCIAL = "2"  # коммерческая
+
+
+class VerifyFilter(str, enum.Enum):
+    """Verification filter enumeration."""
+    VERIFIED = "verified"  # Верифицированные застройщики
+    AI = "ai"  # ИИ-оценка цены
+
+
+class PeculiarityFilter(str, enum.Enum):
+    """Peculiarity filter enumeration."""
+    BALCONY = "balcony"  # Балкон/лоджия
+    FURNITURE = "furniture"  # Мебель
+    PARKING = "parking"  # Парковка
+    GYM = "gym"  # Фитнес-зал
+    AC = "ac"  # Кондиционер
+    APPLIANCES = "appliances"  # Техника
+    CONCIERGE = "concierge"  # Консьерж
+    PLAYGROUND = "playground"  # Детская площадка
 
 
 # Search and filter schemas
@@ -301,6 +334,9 @@ class PropertySearchParams(BaseModel):
     # Basic filters
     property_type: Optional[PropertyType] = None
     deal_type: Optional[DealType] = None
+    
+    # Type filter with numeric mapping (дом - 0, квартира - 1, коммерческая - 2)
+    type: Optional[str] = Field(None, description="Property type: 0=дом, 1=квартира, 2=коммерческая")
 
     # Location filters
     region: Optional[str] = None
@@ -315,14 +351,19 @@ class PropertySearchParams(BaseModel):
     total_area_min: Optional[float] = Field(None, gt=0)
     total_area_max: Optional[float] = Field(None, gt=0)
 
-    # Room filters
+    # Room filters with enhanced logic
     rooms_count: Optional[List[int]] = Field(None, description="List of room counts")
+    rooms: Optional[str] = Field(None, description="Rooms filter: single number or comma-separated (1,2,3,4). If 4+ specified, includes 4 and more")
 
     # Feature filters
     has_parking: Optional[bool] = None
     has_balcony: Optional[bool] = None
     has_elevator: Optional[bool] = None
     renovation_type: Optional[RenovationType] = None
+    
+    # Enhanced feature filters
+    peculiarity: Optional[str] = Field(None, description="Comma-separated peculiarities: balcony,parking,playground,etc.")
+    verify: Optional[str] = Field(None, description="Verification filters: verified,ai")
 
     # Building filters
     building_year_min: Optional[int] = Field(None, ge=1800)
@@ -331,21 +372,21 @@ class PropertySearchParams(BaseModel):
     floor_max: Optional[int] = Field(None, ge=1)
 
     # Developer filter
-    developer_id: Optional[str] = None
+    developer_id: Optional[UUID] = None
     developer_verified: Optional[bool] = None
 
     # Status filters
     status: Optional[List[PropertyStatus]] = None
     is_featured: Optional[bool] = None
 
-    # Sorting
+    # Enhanced sorting options
     sort: Optional[str] = Field(
-        default="created_desc",
-        description="Sort by: price_asc, price_desc, created_desc, area_asc, area_desc, popular",
+        default="date_desc",
+        description="Sort by: price_asc, price_desc, date_desc, date_asc, area_asc, area_desc, popular",
     )
 
     # Search query
-    search: Optional[str] = Field(None, description="Free text search")
+    search: Optional[str] = Field(None, description="Free text search in titles and other text fields")
 
     # Geographic search
     lat: Optional[float] = Field(None, ge=-90, le=90)
@@ -371,25 +412,43 @@ class PropertySearchParams(BaseModel):
         return v
 
 
+class PaginationMeta(BaseModel):
+    """Pagination metadata schema."""
+    
+    page: int = Field(..., description="Current page number")
+    limit: int = Field(..., description="Items per page")
+    total: int = Field(..., description="Total number of items")
+    pages: int = Field(..., description="Total number of pages")
+    has_next: bool = Field(..., description="Whether there is a next page")
+    has_prev: bool = Field(..., description="Whether there is a previous page")
+    next_page: Optional[int] = Field(None, description="Next page number if available")
+    prev_page: Optional[int] = Field(None, description="Previous page number if available")
+
+
 class PropertySearchResponse(BaseModel):
     """Property search response schema."""
 
-    items: List[PropertyListResponse]
-    total: int
-    page: int
-    limit: int
-    pages: int
-
+    items: List[PropertyListResponse] = Field(..., description="List of properties matching search criteria")
+    pagination: PaginationMeta = Field(..., description="Pagination information")
+    
     # Search metadata
-    search_time_ms: Optional[float] = None
-    filters_applied: dict = {}
+    search_time_ms: Optional[float] = Field(None, description="Search execution time in milliseconds")
+    filters_applied: dict = Field(default_factory=dict, description="Applied filters summary")
+    search_query: Optional[str] = Field(None, description="Search query used")
+
+
+class DeveloperListPaginated(BaseModel):
+    """Paginated developer list response schema."""
+    
+    items: List[dict] = Field(..., description="List of developers")  # Using dict to avoid circular import
+    pagination: PaginationMeta = Field(..., description="Pagination information")
 
 
 # File upload schemas
 class PropertyImageUploadResponse(BaseModel):
     """Property image upload response schema."""
 
-    id: str
+    id: UUID
     url: str
     thumbnail_url: Optional[str] = None
     title: Optional[str] = None
@@ -400,7 +459,7 @@ class PropertyImageUploadResponse(BaseModel):
 class PropertyDocumentUploadResponse(BaseModel):
     """Property document upload response schema."""
 
-    id: str
+    id: UUID
     title: str
     document_type: str
     file_url: str

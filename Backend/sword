@@ -1,0 +1,73 @@
+                                     Таблица "public.properties"
+     Столбец      |           Тип            | Правило сортировки | Допустимость NULL | По умолчанию 
+------------------+--------------------------+--------------------+-------------------+--------------
+ developer_id     | uuid                     |                    | not null          | 
+ complex_id       | uuid                     |                    |                   | 
+ title            | character varying(255)   |                    | not null          | 
+ description      | text                     |                    | not null          | 
+ property_type    | propertytype             |                    | not null          | 
+ deal_type        | dealtype                 |                    | not null          | 
+ price            | numeric(15,2)            |                    | not null          | 
+ price_per_sqm    | numeric(10,2)            |                    |                   | 
+ currency         | character varying(3)     |                    | not null          | 
+ region           | character varying(100)   |                    | not null          | 
+ city             | character varying(100)   |                    | not null          | 
+ district         | character varying(100)   |                    |                   | 
+ street           | character varying(255)   |                    | not null          | 
+ house_number     | character varying(50)    |                    | not null          | 
+ apartment_number | character varying(50)    |                    |                   | 
+ postal_code      | character varying(10)    |                    |                   | 
+ latitude         | double precision         |                    |                   | 
+ longitude        | double precision         |                    |                   | 
+ total_area       | double precision         |                    |                   | 
+ living_area      | double precision         |                    |                   | 
+ kitchen_area     | double precision         |                    |                   | 
+ rooms_count      | integer                  |                    |                   | 
+ bedrooms_count   | integer                  |                    |                   | 
+ bathrooms_count  | integer                  |                    |                   | 
+ floor            | integer                  |                    |                   | 
+ total_floors     | integer                  |                    |                   | 
+ building_year    | integer                  |                    |                   | 
+ ceiling_height   | double precision         |                    |                   | 
+ has_balcony      | boolean                  |                    | not null          | 
+ has_loggia       | boolean                  |                    | not null          | 
+ has_elevator     | boolean                  |                    | not null          | 
+ has_parking      | boolean                  |                    | not null          | 
+ has_furniture    | boolean                  |                    | not null          | 
+ renovation_type  | renovationtype           |                    |                   | 
+ status           | propertystatus           |                    | not null          | 
+ is_featured      | boolean                  |                    | not null          | 
+ views_count      | integer                  |                    | not null          | 
+ favorites_count  | integer                  |                    | not null          | 
+ available_from   | date                     |                    |                   | 
+ id               | uuid                     |                    | not null          | 
+ created_at       | timestamp with time zone |                    | not null          | now()
+ updated_at       | timestamp with time zone |                    | not null          | now()
+Индексы:
+    "properties_pkey" PRIMARY KEY, btree (id)
+    "ix_properties_city" btree (city)
+    "ix_properties_complex_id" btree (complex_id)
+    "ix_properties_deal_type" btree (deal_type)
+    "ix_properties_developer_id" btree (developer_id)
+    "ix_properties_has_parking" btree (has_parking)
+    "ix_properties_is_featured" btree (is_featured)
+    "ix_properties_price" btree (price)
+    "ix_properties_property_type" btree (property_type)
+    "ix_properties_region" btree (region)
+    "ix_properties_rooms_count" btree (rooms_count)
+    "ix_properties_status" btree (status)
+    "ix_properties_title" btree (title)
+Ограничения внешнего ключа:
+    "properties_complex_id_fkey" FOREIGN KEY (complex_id) REFERENCES complexes(id) ON DELETE SET NULL
+    "properties_developer_id_fkey" FOREIGN KEY (developer_id) REFERENCES developers(id) ON DELETE CASCADE
+Ссылки извне:
+    TABLE "bookings" CONSTRAINT "bookings_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "dynamic_pricing" CONSTRAINT "dynamic_pricing_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "favorites" CONSTRAINT "favorites_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "leads" CONSTRAINT "leads_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "promo_codes" CONSTRAINT "promo_codes_target_property_id_fkey" FOREIGN KEY (target_property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "property_documents" CONSTRAINT "property_documents_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "property_images" CONSTRAINT "property_images_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "reviews" CONSTRAINT "reviews_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    TABLE "view_history" CONSTRAINT "view_history_property_id_fkey" FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+

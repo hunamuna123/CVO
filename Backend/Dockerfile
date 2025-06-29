@@ -1,5 +1,5 @@
 # Multi-stage build for production
-FROM python:3.13-slim as base
+FROM python:3.12-slim as base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies including Rust for aiokafka
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -17,10 +17,13 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     pkg-config \
     curl \
+    git \
+    rustc \
+    cargo \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
-RUN pip install poetry==1.7.1
+RUN pip install poetry==1.8.3
 
 # Configure Poetry
 ENV POETRY_NO_INTERACTION=1 \
@@ -35,8 +38,10 @@ COPY pyproject.toml poetry.lock ./
 # Development stage
 FROM base as development
 
-# Install dependencies with dev packages
-RUN poetry install --with dev && rm -rf $POETRY_CACHE_DIR
+# Install aiokafka first with pip, then install remaining dependencies with Poetry
+RUN pip install aiokafka==0.10.0 \
+    && poetry install --with dev \
+    && rm -rf $POETRY_CACHE_DIR
 
 # Copy application code
 COPY . .
@@ -53,8 +58,10 @@ CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", 
 # Production stage
 FROM base as production
 
-# Install only production dependencies
-RUN poetry install --only=main && rm -rf $POETRY_CACHE_DIR
+# Install aiokafka first with pip, then install remaining production dependencies
+RUN pip install aiokafka==0.10.0 \
+    && poetry install --only=main \
+    && rm -rf $POETRY_CACHE_DIR
 
 # Copy application code
 COPY . .

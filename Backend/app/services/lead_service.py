@@ -122,7 +122,7 @@ class LeadService:
             select(Lead)
             .join(Property, Lead.property_id == Property.id)
             .options(
-                selectinload(Lead.property),
+                selectinload(Lead.property_obj),
                 selectinload(Lead.user),
             )
             .where(Property.developer_id == UUID(developer_id))
@@ -178,12 +178,12 @@ class LeadService:
         lead_responses = []
         for lead in leads:
             property_info = PropertyInfo(
-                id=str(lead.property.id),
-                title=lead.property.title,
-                property_type=lead.property.property_type,
-                price=float(lead.property.price) if lead.property.price else None,
-                city=lead.property.city,
-                street=lead.property.street,
+                id=str(lead.property_obj.id),
+                title=lead.property_obj.title,
+                property_type=lead.property_obj.property_type,
+                price=float(lead.property_obj.price) if lead.property_obj.price else None,
+                city=lead.property_obj.city,
+                street=lead.property_obj.street,
             )
 
             user_info = None
@@ -361,7 +361,7 @@ class LeadService:
             select(Lead)
             .join(Property, Lead.property_id == Property.id)
             .options(
-                selectinload(Lead.property),
+                selectinload(Lead.property_obj),
                 selectinload(Lead.user),
             )
             .where(
@@ -383,12 +383,12 @@ class LeadService:
 
         # Build response
         property_info = PropertyInfo(
-            id=str(lead.property.id),
-            title=lead.property.title,
-            property_type=lead.property.property_type,
-            price=float(lead.property.price) if lead.property.price else None,
-            city=lead.property.city,
-            street=lead.property.street,
+            id=str(lead.property_obj.id),
+            title=lead.property_obj.title,
+            property_type=lead.property_obj.property_type,
+            price=float(lead.property_obj.price) if lead.property_obj.price else None,
+            city=lead.property_obj.city,
+            street=lead.property_obj.street,
         )
 
         user_info = None
@@ -512,7 +512,7 @@ class LeadService:
         query = (
             select(Lead)
             .options(
-                selectinload(Lead.property),
+                selectinload(Lead.property_obj),
                 selectinload(Lead.user),
             )
             .where(Lead.user_id == UUID(user_id))
@@ -528,12 +528,12 @@ class LeadService:
         lead_responses = []
         for lead in leads:
             property_info = PropertyInfo(
-                id=str(lead.property.id),
-                title=lead.property.title,
-                property_type=lead.property.property_type,
-                price=float(lead.property.price) if lead.property.price else None,
-                city=lead.property.city,
-                street=lead.property.street,
+                id=str(lead.property_obj.id),
+                title=lead.property_obj.title,
+                property_type=lead.property_obj.property_type,
+                price=float(lead.property_obj.price) if lead.property_obj.price else None,
+                city=lead.property_obj.city,
+                street=lead.property_obj.street,
             )
 
             user_info = UserInfo(

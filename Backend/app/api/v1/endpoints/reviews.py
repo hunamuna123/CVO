@@ -33,7 +33,7 @@ review_service = ReviewService()
 )
 async def get_reviews(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     developer_id: Optional[str] = Query(None, description="Filter by developer ID"),
     property_id: Optional[str] = Query(None, description="Filter by property ID"),
     rating_min: Optional[int] = Query(
@@ -252,7 +252,7 @@ async def delete_review(
 )
 async def get_my_reviews(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> List[ReviewListResponse]:

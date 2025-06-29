@@ -3,8 +3,10 @@ ViewHistory model for property view tracking.
 """
 
 from typing import Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -21,15 +23,17 @@ class ViewHistory(BaseModel):
     __tablename__ = "view_history"
 
     # User relationship (optional for anonymous users)
-    user_id: Mapped[Optional[str]] = mapped_column(
+    user_id: Mapped[Optional[PyUUID]] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
-        comment="FK to User",
+        comment="FK to User (may be null for anonymous)",
     )
 
     # Property relationship
-    property_id: Mapped[str] = mapped_column(
+    property_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -52,7 +56,7 @@ class ViewHistory(BaseModel):
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="view_history")
 
-    property: Mapped["Property"] = relationship(
+    property_obj: Mapped["Property"] = relationship(
         "Property", back_populates="view_history"
     )
 

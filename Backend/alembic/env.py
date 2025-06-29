@@ -19,6 +19,21 @@ from app.models.base import Base  # Import base model
 
 # Import all models so they're registered with SQLAlchemy
 from app.models.user import User  # noqa: F401
+from app.models.developer import Developer  # noqa: F401
+from app.models.property import Property  # noqa: F401
+from app.models.property_image import PropertyImage  # noqa: F401
+from app.models.property_document import PropertyDocument  # noqa: F401
+from app.models.favorite import Favorite  # noqa: F401
+from app.models.lead import Lead  # noqa: F401
+from app.models.review import Review  # noqa: F401
+from app.models.view_history import ViewHistory  # noqa: F401
+from app.models.search_history import SearchHistory  # noqa: F401
+from app.models.complex import Complex  # noqa: F401
+from app.models.complex_image import ComplexImage  # noqa: F401
+from app.models.booking import Booking  # noqa: F401
+from app.models.promo_code import PromoCode  # noqa: F401
+from app.models.dynamic_pricing import DynamicPricing  # noqa: F401
+from app.models.mongodb import *  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

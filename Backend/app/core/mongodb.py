@@ -18,7 +18,7 @@ class MongoDBSettings(BaseSettings):
     """MongoDB configuration settings."""
     
     # MongoDB connection
-    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_URL: str = "mongodb://admin:password@localhost:27017/realestate_documents?authSource=admin"
     MONGODB_DATABASE: str = "realestate_documents"
     MONGODB_MIN_POOL_SIZE: int = 10
     MONGODB_MAX_POOL_SIZE: int = 100
@@ -38,12 +38,14 @@ class MongoDBManager:
     
     def __init__(self):
         self.settings = MongoDBSettings()
+        logger.info(f"MongoDB settings loaded: URL={self.settings.MONGODB_URL}, DB={self.settings.MONGODB_DATABASE}")
         self.client: Optional[AsyncIOMotorClient] = None
         self.database = None
         
     async def connect(self) -> None:
         """Create MongoDB connection."""
         try:
+            logger.info(f"Attempting to connect to MongoDB with URL: {self.settings.MONGODB_URL}")
             self.client = AsyncIOMotorClient(
                 self.settings.MONGODB_URL,
                 minPoolSize=self.settings.MONGODB_MIN_POOL_SIZE,
@@ -76,24 +78,32 @@ class MongoDBManager:
     
     async def _init_beanie(self) -> None:
         """Initialize Beanie ODM with document models."""
-        from app.models.mongodb import (
-            ApplicationLog,
-            AuditLog,
-            PropertyDocument,
-            UserAnalytics,
-        )
-        
-        await init_beanie(
-            database=self.database,
-            document_models=[
+        try:
+            from app.models.mongodb import (
                 ApplicationLog,
                 AuditLog,
                 PropertyDocument,
                 UserAnalytics,
-            ]
-        )
-        
-        logger.info("Beanie ODM initialized successfully")
+            )
+            
+            # Test database access first
+            await self.database.list_collection_names()
+            
+            await init_beanie(
+                database=self.database,
+                document_models=[
+                    ApplicationLog,
+                    AuditLog,
+                    PropertyDocument,
+                    UserAnalytics,
+                ]
+            )
+            
+            logger.info("Beanie ODM initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Beanie ODM: {e}")
+            # Don't raise here, allow the app to continue without MongoDB ODM
+            logger.warning("Continuing without Beanie ODM initialization")
     
     async def health_check(self) -> bool:
         """Check MongoDB health."""

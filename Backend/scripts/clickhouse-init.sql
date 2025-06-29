@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS property_views (
     date Date DEFAULT toDate(timestamp)
 ) ENGINE = MergeTree()
 PARTITION BY date
-ORDER BY (property_id, timestamp);
+ORDER BY (property_id, timestamp)
+SETTINGS allow_nullable_key = 1;
 
 -- Property search analytics table
 CREATE TABLE IF NOT EXISTS property_searches (

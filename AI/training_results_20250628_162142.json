@@ -1,0 +1,14 @@
+{
+  "price_prediction": {
+    "error": "attempted relative import beyond top-level package"
+  },
+  "individual_models": {
+    "error": "attempted relative import beyond top-level package"
+  },
+  "demand_analysis": {
+    "error": "attempted relative import beyond top-level package"
+  },
+  "recommendation": {
+    "error": "attempted relative import beyond top-level package"
+  }
+}

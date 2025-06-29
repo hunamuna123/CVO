@@ -125,6 +125,8 @@ class PropertyService:
             if increment_views:
                 db_property.increment_views()
                 await db.commit()
+                # Refresh to avoid stale data issues
+                await db.refresh(db_property)
 
             return await self._property_to_response(db, db_property)
 
@@ -315,14 +317,28 @@ class PropertyService:
                 filters=filters_applied,
             )
 
-            return PropertySearchResponse(
-                items=items,
-                total=total,
+            # Calculate pagination metadata
+            has_next = search_params.page < pages
+            has_prev = search_params.page > 1
+            
+            from app.schemas.property import PaginationMeta
+            pagination = PaginationMeta(
                 page=search_params.page,
                 limit=search_params.limit,
+                total=total,
                 pages=pages,
+                has_next=has_next,
+                has_prev=has_prev,
+                next_page=search_params.page + 1 if has_next else None,
+                prev_page=search_params.page - 1 if has_prev else None
+            )
+            
+            return PropertySearchResponse(
+                items=items,
+                pagination=pagination,
                 search_time_ms=search_time_ms,
                 filters_applied=filters_applied,
+                search_query=search_params.search,
             )
 
         except Exception as e:
@@ -338,6 +354,56 @@ class PropertyService:
                     "error": {
                         "code": "SEARCH_FAILED",
                         "message": "Ошибка при поиске объектов недвижимости",
+                        "details": {"error": str(e)},
+                    }
+                },
+            )
+
+    async def get_all_properties(
+        self, db: AsyncSession
+    ) -> List[PropertyListResponse]:
+        """
+        Get all active properties without pagination.
+        
+        Simple method to retrieve all active properties for UI components
+        like maps, select lists, or other components that need the full list.
+        """
+        try:
+            # Get all active properties with basic info
+            query = (
+                select(Property)
+                .options(
+                    selectinload(Property.images),
+                    selectinload(Property.developer).selectinload(Developer.user),
+                )
+                .where(Property.status == PropertyStatus.ACTIVE)
+                .order_by(Property.created_at.desc())
+            )
+            
+            result = await db.execute(query)
+            properties = result.scalars().all()
+            
+            # Convert to response format
+            items = []
+            for property_obj in properties:
+                response_data = await self._property_to_list_response(db, property_obj)
+                items.append(response_data)
+            
+            logger.info("Retrieved all properties", count=len(items))
+            return items
+            
+        except Exception as e:
+            logger.error(
+                "Failed to get all properties",
+                error=str(e),
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": {
+                        "code": "ALL_PROPERTIES_RETRIEVAL_FAILED",
+                        "message": "Не удалось получить список всех объектов",
                         "details": {"error": str(e)},
                     }
                 },
@@ -672,6 +738,17 @@ class PropertyService:
         if search_params.deal_type:
             query = query.where(Property.deal_type == search_params.deal_type)
             filters_applied["deal_type"] = search_params.deal_type.value
+        
+        # Handle numeric type filter (0=дом, 1=квартира, 2=коммерческая)
+        if search_params.type:
+            type_mapping = {
+                "0": PropertyType.HOUSE,
+                "1": PropertyType.APARTMENT, 
+                "2": PropertyType.COMMERCIAL
+            }
+            if search_params.type in type_mapping:
+                query = query.where(Property.property_type == type_mapping[search_params.type])
+                filters_applied["type"] = search_params.type
 
         if search_params.region:
             query = query.where(Property.region.ilike(f"%{search_params.region}%"))
@@ -762,6 +839,77 @@ class PropertyService:
             )
             filters_applied["search"] = search_params.search
 
+        # Enhanced rooms filter with 4+ logic
+        if search_params.rooms:
+            try:
+                room_numbers = [int(x.strip()) for x in search_params.rooms.split(',') if x.strip().isdigit()]
+                room_conditions = []
+                for room_num in room_numbers:
+                    if room_num >= 4:
+                        # If 4 or more, include all rooms >= 4
+                        room_conditions.append(Property.rooms_count >= 4)
+                    else:
+                        room_conditions.append(Property.rooms_count == room_num)
+                
+                if room_conditions:
+                    query = query.where(or_(*room_conditions))
+                    filters_applied["rooms"] = search_params.rooms
+            except ValueError:
+                pass  # Skip invalid room format
+        
+        # Peculiarity filter (feature-based filtering)
+        if search_params.peculiarity:
+            peculiarities = [p.strip().lower() for p in search_params.peculiarity.split(',')]
+            peculiarity_conditions = []
+            
+            for peculiarity in peculiarities:
+                if peculiarity == 'balcony':
+                    peculiarity_conditions.append(or_(Property.has_balcony == True, Property.has_loggia == True))
+                elif peculiarity == 'parking':
+                    peculiarity_conditions.append(Property.has_parking == True)
+                elif peculiarity == 'furniture':
+                    peculiarity_conditions.append(Property.has_furniture == True)
+                elif peculiarity == 'playground':
+                    # For playground, we might need to add a field to Property model or join with Complex
+                    # For now, we'll skip this or you can extend the Property model
+                    pass
+                elif peculiarity == 'gym':
+                    # Similar to playground - might need complex-level features
+                    pass
+                elif peculiarity == 'ac':
+                    # Might need additional field in Property model
+                    pass
+                elif peculiarity == 'appliances':
+                    # Might need additional field in Property model  
+                    pass
+                elif peculiarity == 'concierge':
+                    # Might need additional field in Property model
+                    pass
+            
+            if peculiarity_conditions:
+                query = query.where(and_(*peculiarity_conditions))
+                filters_applied["peculiarity"] = search_params.peculiarity
+        
+        # Verify filter (developer verification and AI features)
+        if search_params.verify:
+            verify_options = [v.strip().lower() for v in search_params.verify.split(',')]
+            verify_conditions = []
+            
+            for verify_option in verify_options:
+                if verify_option == 'verified':
+                    # Join with Developer table to check verification
+                    from app.models import Developer
+                    verify_conditions.append(Developer.is_verified == True)
+                    # Note: This requires joining with Developer table in the main query
+                elif verify_option == 'ai':
+                    # For AI price evaluation, we might need additional fields
+                    # This could be a flag in Property model or calculated field
+                    pass
+            
+            if verify_conditions and 'verified' in [v.strip().lower() for v in search_params.verify.split(',')]:
+                # We need to ensure Developer is joined in the main query for this filter
+                filters_applied["verify"] = search_params.verify
+        
         # Geographic search
         if search_params.lat and search_params.lng and search_params.radius:
             # Simple distance calculation (can be improved with PostGIS)
@@ -792,6 +940,10 @@ class PropertyService:
             return query.order_by(Property.price.asc())
         elif sort_option == "price_desc":
             return query.order_by(Property.price.desc())
+        elif sort_option == "date_asc" or sort_option == "data_asc":  # Support both spellings
+            return query.order_by(Property.created_at.asc())
+        elif sort_option == "date_desc" or sort_option == "data_desc":
+            return query.order_by(Property.created_at.desc())
         elif sort_option == "area_asc":
             return query.order_by(Property.total_area.asc())
         elif sort_option == "area_desc":
@@ -800,110 +952,276 @@ class PropertyService:
             return query.order_by(
                 Property.views_count.desc(), Property.favorites_count.desc()
             )
-        else:  # created_desc (default)
+        else:  # date_desc (default)
             return query.order_by(Property.created_at.desc())
 
     async def _property_to_response(
         self, db: AsyncSession, property_obj: Property
     ) -> PropertyResponse:
         """Convert Property model to PropertyResponse."""
-        # Get developer info
-        if not property_obj.developer:
-            developer_query = (
-                select(Developer)
-                .options(selectinload(Developer.user))
-                .where(Developer.id == property_obj.developer_id)
-            )
-            result = await db.execute(developer_query)
-            developer = result.scalar_one()
-        else:
-            developer = property_obj.developer
+        try:
+            # Ensure we have a fresh object with all data loaded
+            await db.refresh(property_obj)
+            
+            # Get developer info
+            if not property_obj.developer:
+                developer_query = (
+                    select(Developer)
+                    .options(selectinload(Developer.user))
+                    .where(Developer.id == property_obj.developer_id)
+                )
+                result = await db.execute(developer_query)
+                developer = result.scalar_one()
+            else:
+                developer = property_obj.developer
 
-        developer_info = {
-            "id": str(developer.id),
-            "company_name": developer.company_name,
-            "is_verified": developer.is_verified,
-            "rating": float(developer.rating) if developer.rating else 0.0,
-            "logo_url": developer.logo_url,
-        }
-
-        # Convert images
-        images = [
-            {
-                "id": str(img.id),
-                "url": img.url,
-                "title": img.title,
-                "is_main": img.is_main,
-                "order": img.order,
-                "created_at": img.created_at,
+            developer_info = {
+                "id": str(developer.id),
+                "company_name": developer.company_name,
+                "is_verified": developer.is_verified,
+                "rating": float(developer.rating) if developer.rating else 0.0,
+                "logo_url": developer.logo_url,
             }
-            for img in sorted(
-                property_obj.images, key=lambda x: (not x.is_main, x.order)
+
+            # Convert images
+            images = [
+                {
+                    "id": str(img.id),
+                    "url": img.url,
+                    "title": img.title,
+                    "is_main": img.is_main,
+                    "order": img.order,
+                    "created_at": img.created_at,
+                }
+                for img in sorted(
+                    property_obj.images, key=lambda x: (not x.is_main, x.order)
+                )
+            ]
+
+            # Convert documents
+            documents = [
+                {
+                    "id": str(doc.id),
+                    "title": doc.title,
+                    "document_type": doc.document_type,
+                    "file_url": doc.file_url,
+                    "file_size": doc.file_size,
+                    "mime_type": doc.mime_type,
+                    "is_verified": doc.is_verified,
+                    "created_at": doc.created_at,
+                }
+                for doc in property_obj.documents
+            ]
+
+            return PropertyResponse(
+                id=str(property_obj.id),
+                title=property_obj.title,
+                description=property_obj.description,
+                property_type=property_obj.property_type,
+                deal_type=property_obj.deal_type,
+                price=property_obj.price,
+                price_per_sqm=property_obj.price_per_sqm,
+                currency=property_obj.currency,
+                region=property_obj.region,
+                city=property_obj.city,
+                district=property_obj.district,
+                street=property_obj.street,
+                house_number=property_obj.house_number,
+                apartment_number=property_obj.apartment_number,
+                postal_code=property_obj.postal_code,
+                latitude=property_obj.latitude,
+                longitude=property_obj.longitude,
+                full_address=property_obj.full_address,
+                total_area=property_obj.total_area,
+                living_area=property_obj.living_area,
+                kitchen_area=property_obj.kitchen_area,
+                rooms_count=property_obj.rooms_count,
+                bedrooms_count=property_obj.bedrooms_count,
+                bathrooms_count=property_obj.bathrooms_count,
+                floor=property_obj.floor,
+                total_floors=property_obj.total_floors,
+                building_year=property_obj.building_year,
+                ceiling_height=property_obj.ceiling_height,
+                has_balcony=property_obj.has_balcony,
+                has_loggia=property_obj.has_loggia,
+                has_elevator=property_obj.has_elevator,
+                has_parking=property_obj.has_parking,
+                has_furniture=property_obj.has_furniture,
+                renovation_type=property_obj.renovation_type,
+                status=property_obj.status,
+                is_featured=property_obj.is_featured,
+                views_count=property_obj.views_count,
+                favorites_count=property_obj.favorites_count,
+                available_from=property_obj.available_from,
+                images=images,
+                documents=documents,
+                developer_id=str(property_obj.developer_id),
+                developer=developer_info,
+                created_at=property_obj.created_at,
+                updated_at=property_obj.updated_at,
             )
-        ]
+        
+        except Exception as e:
+            logger.error(
+                "Failed to convert property to response",
+                property_id=str(property_obj.id),
+                error=str(e),
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": {
+                        "code": "PROPERTY_CONVERSION_FAILED",
+                        "message": "Не удалось подготовить данные объекта",
+                        "details": {"error": str(e)},
+                    }
+                },
+            )
 
-        # Convert documents
-        documents = [
-            {
-                "id": str(doc.id),
-                "title": doc.title,
-                "document_type": doc.document_type,
-                "file_url": doc.file_url,
-                "file_size": doc.file_size,
-                "mime_type": doc.mime_type,
-                "is_verified": doc.is_verified,
-                "created_at": doc.created_at,
-            }
-            for doc in property_obj.documents
-        ]
+    async def delete_property_image(
+        self, db: AsyncSession, property_id: str, image_id: str, developer_id: str
+    ) -> bool:
+        """Delete property image."""
+        try:
+            # Verify property ownership
+            await self._get_property_by_developer(db, property_id, developer_id)
+            
+            # Get image
+            query = (
+                select(PropertyImage)
+                .where(
+                    and_(
+                        PropertyImage.id == image_id,
+                        PropertyImage.property_id == property_id
+                    )
+                )
+            )
+            result = await db.execute(query)
+            db_image = result.scalar_one_or_none()
+            
+            if not db_image:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={
+                        "error": {
+                            "code": "IMAGE_NOT_FOUND",
+                            "message": "Изображение не найдено",
+                            "details": {},
+                        }
+                    },
+                )
+            
+            # Delete file from storage
+            await self.file_service.delete_file(db_image.url)
+            
+            # Delete from database
+            await db.delete(db_image)
+            await db.commit()
+            
+            logger.info(
+                "Property image deleted successfully",
+                property_id=property_id,
+                image_id=image_id,
+                developer_id=developer_id,
+            )
+            
+            return True
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(
+                "Failed to delete property image",
+                property_id=property_id,
+                image_id=image_id,
+                developer_id=developer_id,
+                error=str(e),
+                exc_info=True,
+            )
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": {
+                        "code": "IMAGE_DELETION_FAILED",
+                        "message": "Не удалось удалить изображение",
+                        "details": {"error": str(e)},
+                    }
+                },
+            )
 
-        return PropertyResponse(
-            id=str(property_obj.id),
-            title=property_obj.title,
-            description=property_obj.description,
-            property_type=property_obj.property_type,
-            deal_type=property_obj.deal_type,
-            price=property_obj.price,
-            price_per_sqm=property_obj.price_per_sqm,
-            currency=property_obj.currency,
-            region=property_obj.region,
-            city=property_obj.city,
-            district=property_obj.district,
-            street=property_obj.street,
-            house_number=property_obj.house_number,
-            apartment_number=property_obj.apartment_number,
-            postal_code=property_obj.postal_code,
-            latitude=property_obj.latitude,
-            longitude=property_obj.longitude,
-            full_address=property_obj.full_address,
-            total_area=property_obj.total_area,
-            living_area=property_obj.living_area,
-            kitchen_area=property_obj.kitchen_area,
-            rooms_count=property_obj.rooms_count,
-            bedrooms_count=property_obj.bedrooms_count,
-            bathrooms_count=property_obj.bathrooms_count,
-            floor=property_obj.floor,
-            total_floors=property_obj.total_floors,
-            building_year=property_obj.building_year,
-            ceiling_height=property_obj.ceiling_height,
-            has_balcony=property_obj.has_balcony,
-            has_loggia=property_obj.has_loggia,
-            has_elevator=property_obj.has_elevator,
-            has_parking=property_obj.has_parking,
-            has_furniture=property_obj.has_furniture,
-            renovation_type=property_obj.renovation_type,
-            status=property_obj.status,
-            is_featured=property_obj.is_featured,
-            views_count=property_obj.views_count,
-            favorites_count=property_obj.favorites_count,
-            available_from=property_obj.available_from,
-            images=images,
-            documents=documents,
-            developer_id=str(property_obj.developer_id),
-            developer=developer_info,
-            created_at=property_obj.created_at,
-            updated_at=property_obj.updated_at,
-        )
+    async def delete_property_document(
+        self, db: AsyncSession, property_id: str, document_id: str, developer_id: str
+    ) -> bool:
+        """Delete property document."""
+        try:
+            # Verify property ownership
+            await self._get_property_by_developer(db, property_id, developer_id)
+            
+            # Get document
+            query = (
+                select(PropertyDocument)
+                .where(
+                    and_(
+                        PropertyDocument.id == document_id,
+                        PropertyDocument.property_id == property_id
+                    )
+                )
+            )
+            result = await db.execute(query)
+            db_document = result.scalar_one_or_none()
+            
+            if not db_document:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={
+                        "error": {
+                            "code": "DOCUMENT_NOT_FOUND",
+                            "message": "Документ не найден",
+                            "details": {},
+                        }
+                    },
+                )
+            
+            # Delete file from storage
+            await self.file_service.delete_file(db_document.file_url)
+            
+            # Delete from database
+            await db.delete(db_document)
+            await db.commit()
+            
+            logger.info(
+                "Property document deleted successfully",
+                property_id=property_id,
+                document_id=document_id,
+                developer_id=developer_id,
+            )
+            
+            return True
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(
+                "Failed to delete property document",
+                property_id=property_id,
+                document_id=document_id,
+                developer_id=developer_id,
+                error=str(e),
+                exc_info=True,
+            )
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": {
+                        "code": "DOCUMENT_DELETION_FAILED",
+                        "message": "Не удалось удалить документ",
+                        "details": {"error": str(e)},
+                    }
+                },
+            )
 
     async def _property_to_list_response(
         self, db: AsyncSession, property_obj: Property

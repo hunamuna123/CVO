@@ -1,26 +1,651 @@
-Frontend/node_modules/
-# Nuxt dev/build outputs
-Frontend/.output
-Frontend/.data
-Frontend/.nuxt
-Frontend/.cache
-Frontend/dist
+# ===================================
+# CVO Real Estate Platform .gitignore
+# ===================================
 
-# Node dependencies
-Frontend/node_modules
+# ========================
+# Environment & Secrets
+# ========================
+.env
+.env.*
+!.env.example
+.envrc
+*.env
+.secrets/
+config/secrets.yaml
+config/secrets.yml
 
+# ========================
+# Python
+# ========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django/Flask stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# FastAPI
+.fastapi_env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+conda-meta/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ========================
+# AI/ML Specific
+# ========================
+# Model files
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.ckpt
+*.model
+*.weights
+*.safetensors
+models/
+checkpoints/
+experiments/
+wandb/
+mlruns/
+.tensorboard/
+.mlflow/
+
+# Training data
+data/raw/
+data/processed/
+datasets/
+*.parquet
+*.arrow
+*.feather
+
+# Training logs
+training.log
+training_*.log
+tensorboard_logs/
+logs/training/
+
+# Jupyter notebooks with outputs
+*-checkpoint.ipynb
+
+# ========================
+# Node.js / Frontend
+# ========================
 # Logs
-Frontend/logs
-Frontend/*.log
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# Misc
-Frontend/.DS_Store
-Frontend/.fleet
-Frontend/.idea
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Local env files
-Frontend/.env
-Frontend/.env.*
-Frontend/!.env.example
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
 
-**/.nuxt/
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Snowpack dependency directory
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Vue.js
+.vuepress/dist
+
+# Vite
+.vite
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ========================
+# Database
+# ========================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+*.sql.backup
+*.sql.bak
+data/database/
+backups/
+dump.rdb
+
+# PostgreSQL
+*.backup
+*.dump
+*.tar
+
+# MongoDB
+dump/
+
+# ========================
+# Docker
+# ========================
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+
+# ========================
+# Logs
+# ========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+api.log
+app.log
+error.log
+access.log
+debug.log
+gunicorn.log
+celery.log
+training.log
+
+# ========================
+# Media Files
+# ========================
+media/
+uploads/
+static/media/
+user_uploads/
+property_images/
+temp_files/
+cache/
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.mkv
+
+# ========================
+# IDE & Editors
+# ========================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm
+.idea/
+*.swp
+*.swo
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*~
+*.swp
+*.swo
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ========================
+# Operating System
+# ========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ========================
+# Security & Keys
+# ========================
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.jks
+*.keystore
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+.ssh/
+ssh_keys/
+certificates/
+.gnupg/
+
+# API Keys
+*.api_key
+api_keys.txt
+credentials.json
+service-account.json
+gcp-credentials.json
+aws-credentials.json
+
+# ========================
+# Temporary Files
+# ========================
+tmp/
+temp/
+.tmp/
+.temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*.orig
+*.rej
+*~
+
+# ========================
+# Application Specific
+# ========================
+# FastAPI
+__pycache__/
+.pytest_cache/
+
+# Alembic
+versions/*.py
+!versions/.gitkeep
+
+# Redis
+dump.rdb
+
+# Elasticsearch
+data/elasticsearch/
+
+# Kafka
+kafka-logs/
+
+# Prometheus
+prometheus_data/
+
+# Grafana
+grafana_data/
+
+# ========================
+# CI/CD
+# ========================
+.github/workflows/secrets/
+.gitlab-ci-local/
+.circleci/
+jenkins/
+
+# ========================
+# Monitoring & Analytics
+# ========================
+.prometheus/
+.grafana/
+.jaeger/
+.zipkin/
+newrelic.ini
+elastic-apm.yml
+
+# ========================
+# Documentation Build
+# ========================
+docs/_build/
+docs/.doctrees/
+site/
+
+# ========================
+# Package managers
+# ========================
+# pip
+pip-wheel-metadata/
+
+# conda
+.conda/
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+__pypackages__/
+
+# ========================
+# Development
+# ========================
+.dev/
+dev/
+debug/
+test_data/
+mock_data/
+fixtures/
+.local/
+
+# Hot reload
+.reload
+
+# Development databases
+dev.db
+development.db
+test.db
+testing.db
+
+# ========================
+# Deployment
+# ========================
+.deployment/
+deployment/
+k8s/secrets/
+helm/values-local.yaml
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terragrunt-cache/
+
+# ========================
+# Backup files
+# ========================
+*.bak
+*.backup
+*.old
+*.orig
+backup_*
+*_backup
+db_backup_*
+
+# ========================
+# Project Specific
+# ========================
+# Real Estate Platform specific
+property_images_cache/
+user_avatars/
+developer_logos/
+complex_images/
+ml_models_cache/
+price_predictions_cache/
+search_index/
+embeddings_cache/
+
+# Analytics data
+analytics_data/
+user_behavior_data/
+property_views_data/
+
+# Generated reports
+reports/generated/
+export/
+downloads/
+
+# Cache directories
+.cache/
+cache/
+.next/cache/
+.nuxt/cache/
+
+# Build artifacts
+build/
+dist/
+out/
+target/
+
+# Auto-generated files
+*.generated.*
+*_generated.*
+auto_*
+
+# ========================
+# End of .gitignore
+# ========================

@@ -12,9 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import Developer, Property, PropertyStatus, User, UserRole
+from app.models.complex import Complex
 from app.models.developer import VerificationStatus
 from app.schemas.auth import AuthResponse
 from app.schemas.developer import (
+    DeveloperDashboardResponse,
     DeveloperListResponse,
     DeveloperRegisterRequest,
     DeveloperResponse,
@@ -173,6 +175,73 @@ class DeveloperService:
         }
 
         return DeveloperResponse(**response_data)
+
+    async def get_all_developers(
+        self, db: AsyncSession
+    ) -> List[DeveloperListResponse]:
+        """
+        Get all developers without pagination.
+        
+        Simple method to retrieve all developers for UI components
+        like select lists, dropdowns, etc.
+        """
+        try:
+            # Get all developers with basic info
+            query = (
+                select(Developer)
+                .where(Developer.is_verified == True)  # Only verified developers
+                .order_by(Developer.company_name.asc())
+            )
+            
+            result = await db.execute(query)
+            developers = result.scalars().all()
+            
+            # Convert to response format
+            developer_list = []
+            for developer in developers:
+                # Get properties count for each developer
+                properties_count_result = await db.execute(
+                    select(func.count(Property.id)).where(
+                        and_(
+                            Property.developer_id == developer.id,
+                            Property.status == PropertyStatus.ACTIVE,
+                        )
+                    )
+                )
+                properties_count = properties_count_result.scalar() or 0
+                
+                developer_response = DeveloperListResponse(
+                    id=str(developer.id),
+                    company_name=developer.company_name,
+                    logo_url=developer.logo_url,
+                    rating=developer.rating,
+                    reviews_count=developer.reviews_count,
+                    is_verified=developer.is_verified,
+                    verification_status=developer.verification_status,
+                    description=developer.description,
+                    properties_count=properties_count,
+                )
+                developer_list.append(developer_response)
+            
+            logger.info("Retrieved all developers", count=len(developer_list))
+            return developer_list
+            
+        except Exception as e:
+            logger.error(
+                "Failed to get all developers: %s",
+                str(e),
+                exc_info=True,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": {
+                        "code": "ALL_DEVELOPERS_RETRIEVAL_FAILED",
+                        "message": "Не удалось получить список всех застройщиков",
+                        "details": {"error": str(e)},
+                    }
+                },
+            )
 
     async def get_developers_list(
         self, db: AsyncSession, params: DeveloperSearchParams
@@ -390,3 +459,419 @@ class DeveloperService:
             developer_responses.append(DeveloperListResponse(**response_data))
 
         return developer_responses
+    
+    async def get_public_developers_list(
+        self, db: AsyncSession, params: DeveloperSearchParams
+    ) -> tuple[List[DeveloperListResponse], int]:
+        """
+        Get paginated list of public (verified) developers.
+        """
+        # Force verified filter for public access
+        params.is_verified = True
+        return await self.get_developers_list(db, params)
+    
+    async def get_developer_dashboard_stats(
+        self, db: AsyncSession, developer_id: str
+    ) -> DeveloperDashboardResponse:
+        """
+        Get dashboard statistics for developer.
+        """
+        # Get basic counts
+        total_properties_result = await db.execute(
+            select(func.count(Property.id)).where(Property.developer_id == developer_id)
+        )
+        total_properties = total_properties_result.scalar() or 0
+        
+        # For now, return basic stats. TODO: Implement full dashboard logic
+        return DeveloperDashboardResponse(
+            total_properties=total_properties,
+            active_properties=total_properties,  # Simplified
+            total_complexes=0,  # TODO: Implement when complex model is available
+            total_views=0,
+            total_contacts=0,
+            total_bookings=0,
+            monthly_views=0,
+            monthly_contacts=0,
+            monthly_bookings=0,
+        )
+    
+    async def get_developer_detailed_statistics(
+        self, db: AsyncSession, developer_id: str, period: str
+    ) -> dict:
+        """
+        Get detailed statistics for developer.
+        """
+        # TODO: Implement detailed statistics
+        return {
+            "period": period,
+            "properties_stats": {},
+            "views_stats": {},
+            "engagement_stats": {},
+            "revenue_stats": {},
+            "booking_stats": {},
+            "performance_metrics": {},
+            "charts_data": {},
+        }
+    
+    async def get_developer_properties(
+        self, db: AsyncSession, developer_id: str, page: int, limit: int,
+        status: Optional[str] = None, property_type: Optional[str] = None,
+        city: Optional[str] = None, search: Optional[str] = None
+    ) -> dict:
+        """
+        Get properties for developer with filtering.
+        """
+        query = select(Property).where(Property.developer_id == developer_id)
+        
+        # Apply filters
+        if status:
+            # TODO: Implement when status field is available
+            pass
+        if property_type:
+            # TODO: Implement when property_type field is available
+            pass
+        if city:
+            # TODO: Implement city filtering
+            pass
+        if search:
+            # TODO: Implement search in title/address
+            pass
+        
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
+        
+        # Apply pagination
+        query = query.offset((page - 1) * limit).limit(limit)
+        
+        result = await db.execute(query)
+        properties = result.scalars().all()
+        
+        # Convert properties to serializable format
+        property_items = []
+        for prop in properties:
+            property_data = {
+                "id": str(prop.id),
+                "title": getattr(prop, 'title', ''),
+                "price": getattr(prop, 'price', 0),
+                "address": getattr(prop, 'address', ''),
+                "area": getattr(prop, 'area', 0),
+                "rooms": getattr(prop, 'rooms', 0),
+                "floor": getattr(prop, 'floor', 0),
+                "total_floors": getattr(prop, 'total_floors', 0),
+                "status": getattr(prop, 'status', '').value if hasattr(getattr(prop, 'status', ''), 'value') else str(getattr(prop, 'status', '')),
+                "created_at": prop.created_at.isoformat() if prop.created_at else None,
+                "updated_at": prop.updated_at.isoformat() if prop.updated_at else None,
+            }
+            property_items.append(property_data)
+        
+        return {
+            "items": property_items,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "pages": (total + limit - 1) // limit,
+            },
+        }
+    
+    async def get_developer_complexes(
+        self, db: AsyncSession, developer_id: str, page: int, limit: int,
+        status: Optional[str] = None, city: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> dict:
+        """
+        Get complexes for developer with filtering.
+        """
+        # TODO: Implement when Complex model is available
+        return {
+            "items": [],
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": 0,
+                "pages": 0,
+            },
+        }
+    
+    async def get_public_developer_properties(
+        self, db: AsyncSession, developer_id: str, page: int, limit: int,
+        property_type: Optional[str] = None, city: Optional[str] = None,
+        price_min: Optional[int] = None, price_max: Optional[int] = None
+    ) -> dict:
+        """
+        Get public properties for developer.
+        """
+        # Verify developer is verified first
+        result = await db.execute(
+            select(Developer).where(
+                Developer.id == developer_id,
+                Developer.is_verified == True
+            )
+        )
+        developer = result.scalar_one_or_none()
+        
+        if not developer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Verified developer not found"
+            )
+        
+        query = select(Property).where(Property.developer_id == developer_id)
+        
+        # Apply filters
+        if property_type:
+            # TODO: Implement when property_type field is available
+            pass
+        if city:
+            # TODO: Implement city filtering
+            pass
+        if price_min:
+            query = query.where(Property.price >= price_min)
+        if price_max:
+            query = query.where(Property.price <= price_max)
+        
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
+        
+        # Apply pagination
+        query = query.offset((page - 1) * limit).limit(limit)
+        
+        result = await db.execute(query)
+        properties = result.scalars().all()
+        
+        # Convert properties to serializable format
+        property_items = []
+        for prop in properties:
+            property_data = {
+                "id": str(prop.id),
+                "title": getattr(prop, 'title', ''),
+                "price": getattr(prop, 'price', 0),
+                "address": getattr(prop, 'address', ''),
+                "area": getattr(prop, 'area', 0),
+                "rooms": getattr(prop, 'rooms', 0),
+                "floor": getattr(prop, 'floor', 0),
+                "total_floors": getattr(prop, 'total_floors', 0),
+                "status": getattr(prop, 'status', '').value if hasattr(getattr(prop, 'status', ''), 'value') else str(getattr(prop, 'status', '')),
+                "created_at": prop.created_at.isoformat() if prop.created_at else None,
+                "updated_at": prop.updated_at.isoformat() if prop.updated_at else None,
+            }
+            property_items.append(property_data)
+        
+        return {
+            "items": property_items,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "pages": (total + limit - 1) // limit,
+            },
+            "developer": {
+                "id": str(developer.id),
+                "company_name": developer.company_name,
+                "logo_url": developer.logo_url,
+            },
+        }
+    
+    async def get_public_developer_complexes(
+        self, db: AsyncSession, developer_id: str, page: int, limit: int,
+        city: Optional[str] = None, status: Optional[str] = None
+    ) -> dict:
+        """
+        Get public complexes for developer.
+        """
+        # Verify developer is verified first
+        result = await db.execute(
+            select(Developer).where(
+                Developer.id == developer_id,
+                Developer.is_verified == True
+            )
+        )
+        developer = result.scalar_one_or_none()
+        
+        if not developer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Verified developer not found"
+            )
+        
+        # Get complexes for developer
+        query = select(Complex).where(Complex.developer_id == developer_id)
+
+        # Apply filters
+        if city:
+            query = query.where(Complex.city == city)
+
+        if status:
+            query = query.where(Complex.status == status)
+
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
+
+        # Apply pagination
+        query = query.offset((page - 1) * limit).limit(limit)
+
+        result = await db.execute(query)
+        complexes = result.scalars().all()
+
+        # Convert complexes to serializable format
+        complex_items = []
+        for complex_obj in complexes:
+            complex_data = {
+                "id": str(complex_obj.id),
+                "name": complex_obj.name,
+                "status": complex_obj.status.name,
+                "city": complex_obj.city,
+                "address": complex_obj.address,
+                "construction_start_date": complex_obj.construction_start_date.isoformat() if complex_obj.construction_start_date else None,
+                "planned_completion_date": complex_obj.planned_completion_date.isoformat() if complex_obj.planned_completion_date else None,
+                "actual_completion_date": complex_obj.actual_completion_date.isoformat() if complex_obj.actual_completion_date else None,
+                "price_from": float(complex_obj.price_from) if complex_obj.price_from else None,
+                "price_to": float(complex_obj.price_to) if complex_obj.price_to else None,
+            }
+            complex_items.append(complex_data)
+        
+        return {
+            "items": complex_items,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "pages": (total + limit - 1) // limit,
+            },
+            "developer": {
+                "id": str(developer.id),
+                "company_name": developer.company_name,
+                "logo_url": developer.logo_url,
+            },
+        }
+    
+    async def login_developer(
+        self, db: AsyncSession, request
+    ):
+        """
+        Developer login method.
+        TODO: Implement developer-specific login logic.
+        """
+        # TODO: Implement developer login
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Developer login not implemented yet"
+        )
+    
+    async def logout_developer(
+        self, db: AsyncSession, user_id: str
+    ):
+        """
+        Developer logout method.
+        TODO: Implement developer-specific logout logic.
+        """
+        # TODO: Implement developer logout
+        pass
+    
+    async def change_password(
+        self, db: AsyncSession, user_id: str, request
+    ):
+        """
+        Change developer password.
+        TODO: Implement password change logic.
+        """
+        # TODO: Implement password change
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Password change not implemented yet"
+        )
+    
+    async def get_pending_developers(
+        self, db: AsyncSession
+    ) -> List[DeveloperResponse]:
+        """
+        Get all developers pending verification.
+        """
+        query = (
+            select(Developer)
+            .where(Developer.verification_status == VerificationStatus.PENDING)
+            .order_by(Developer.created_at.asc())
+        )
+        
+        result = await db.execute(query)
+        developers = result.scalars().all()
+        
+        # Convert to response format
+        responses = []
+        for developer in developers:
+            response = await self.get_developer_by_id(db, str(developer.id))
+            responses.append(response)
+        
+        return responses
+    
+    async def delete_developer(
+        self, db: AsyncSession, developer_id: str, admin_user: User
+    ):
+        """
+        Delete developer account (admin only).
+        """
+        if admin_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only administrators can delete developers"
+            )
+        
+        # Get developer
+        result = await db.execute(
+            select(Developer).where(Developer.id == developer_id)
+        )
+        developer = result.scalar_one_or_none()
+        
+        if not developer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Developer not found"
+            )
+        
+        # TODO: Handle cascading deletes properly
+        await db.delete(developer)
+        await db.commit()
+        
+        logger.info(
+            "Developer %s (ID: %s) deleted by admin %s",
+            developer.company_name,
+            developer.id,
+            admin_user.id,
+        )
+    
+    async def admin_register_developer(
+        self, db: AsyncSession, request: DeveloperRegisterRequest, admin_user: User
+    ) -> DeveloperResponse:
+        """
+        Register developer directly without phone verification (admin only).
+        """
+        if admin_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only administrators can register developers directly"
+            )
+        
+        # TODO: Implement admin registration logic
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Admin developer registration not implemented yet"
+        )
+    
+    async def submit_verification_request(
+        self, db: AsyncSession, developer_id: str, documents: List[str], notes: Optional[str]
+    ) -> dict:
+        """
+        Submit verification request with documents.
+        """
+        # TODO: Implement verification request submission
+        return {
+            "message": "Verification request submitted successfully",
+            "developer_id": developer_id,
+            "documents_count": len(documents),
+        }

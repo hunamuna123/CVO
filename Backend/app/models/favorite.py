@@ -2,7 +2,10 @@
 Favorite model for user favorites.
 """
 
+from uuid import UUID as PyUUID
+
 from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -22,7 +25,8 @@ class Favorite(BaseModel):
     )
 
     # User relationship
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -30,7 +34,8 @@ class Favorite(BaseModel):
     )
 
     # Property relationship
-    property_id: Mapped[str] = mapped_column(
+    property_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -40,7 +45,7 @@ class Favorite(BaseModel):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="favorites")
 
-    property: Mapped["Property"] = relationship("Property", back_populates="favorites")
+    property_obj: Mapped["Property"] = relationship("Property", back_populates="favorites")
 
     def __repr__(self) -> str:
         """String representation."""

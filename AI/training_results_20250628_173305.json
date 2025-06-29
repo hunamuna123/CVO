@@ -1,0 +1,78 @@
+{
+  "advanced_ensemble": {
+    "error": "SuperEnsembleModel.__init__() got an unexpected keyword argument 'use_optuna_optimization'"
+  },
+  "price_prediction": {
+    "ensemble": {
+      "rmse": 3666520.865679394,
+      "mae": 1946735.2503225368,
+      "r2": 0.5567740437409477,
+      "mape": 28.160860518310898
+    },
+    "xgboost": {
+      "rmse": 3034781.1722415835,
+      "mae": 1577716.0,
+      "r2": 0.696351170539856,
+      "mape": 27.80072131092217
+    },
+    "lightgbm": {
+      "rmse": 2954744.017165012,
+      "mae": 1575936.2069276106,
+      "r2": 0.7121563932293828,
+      "mape": 27.730082096969504
+    },
+    "catboost": {
+      "rmse": 2975237.429680521,
+      "mae": 1560620.7348311015,
+      "r2": 0.708149714866827,
+      "mape": 28.31515216055741
+    },
+    "pytorch": {
+      "rmse": 8038535.662549492,
+      "mae": 5855748.0,
+      "r2": -1.1304471492767334,
+      "mape": 99.99456103371529
+    }
+  },
+  "individual_models": {
+    "xgboost": {
+      "rmse": 2687308.7598830173,
+      "mae": 1477474.25,
+      "r2": 0.7619040608406067,
+      "mape": 27.321636401181927
+    },
+    "lightgbm": {
+      "rmse": 2916377.000666872,
+      "mae": 1574535.6415404773,
+      "r2": 0.7195830939834511,
+      "mape": 27.374415061099526
+    },
+    "catboost": {
+      "rmse": 2859901.052975592,
+      "mae": 1530761.2600094485,
+      "r2": 0.7303385414175678,
+      "mape": 27.96395430560836
+    },
+    "pytorch": {
+      "rmse": 8037875.329628844,
+      "mae": 5855248.5,
+      "r2": -1.1300971508026123,
+      "mape": 99.9860839076894
+    }
+  },
+  "demand_analysis": {
+    "error": "cannot insert date, already exists"
+  },
+  "recommendation": {
+    "model_type": "collaborative",
+    "training_status": "completed",
+    "n_interactions": 1272
+  },
+  "visualization_paths": {
+    "data_overview": "visualizations/data_overview.png",
+    "model_comparison": "visualizations/model_comparison.png",
+    "dashboard": "visualizations/interactive_dashboard.html",
+    "report": "visualizations/training_report.html",
+    "summary": "visualizations/results_summary.json"
+  }
+}

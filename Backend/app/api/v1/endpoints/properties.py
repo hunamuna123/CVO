@@ -38,18 +38,145 @@ property_service = PropertyService()
 
 
 @router.get(
-    "",
+    "/all",
+    response_model=List[PropertyListResponse],
+    summary="Get all properties",
+    description="Get all active properties without pagination (for simple listings)",
+    responses={
+        200: {
+            "description": "List of all active properties",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "id": "550e8400-e29b-41d4-a716-446655440000",
+                            "title": "3-комнатная квартира в ЖК 'Пресня Сити'",
+                            "property_type": "APARTMENT",
+                            "deal_type": "SALE",
+                            "price": "15000000.00",
+                            "price_per_sqm": "180000.00",
+                            "currency": "RUB",
+                            "city": "Москва",
+                            "district": "Пресненский",
+                            "total_area": 83.5,
+                            "rooms_count": 3,
+                            "floor": 15,
+                            "total_floors": 25,
+                            "has_parking": True,
+                            "renovation_type": "EURO",
+                            "status": "ACTIVE",
+                            "is_featured": False,
+                            "views_count": 245,
+                            "favorites_count": 12,
+                            "main_image_url": "https://example.com/image.jpg",
+                            "developer_id": "550e8400-e29b-41d4-a716-446655440001",
+                            "developer_name": "ПИК",
+                            "developer_verified": True,
+                            "created_at": "2024-01-15T10:30:00Z",
+                            "updated_at": "2024-01-15T10:30:00Z"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+)
+async def get_all_properties(
+    db: AsyncSession = Depends(get_db),
+) -> List[PropertyListResponse]:
+    """
+    Get all active properties without pagination.
+    
+    **Use cases:**
+    - Property maps that need to show all locations
+    - Export functionality for data analysis
+    - Small UI components displaying property counts
+    
+    **Returns:**
+    - All active properties with basic information
+    - Sorted by creation date (newest first)
+    - Only properties with ACTIVE status included
+    
+    **Performance note:**
+    - This endpoint returns all properties at once
+    - For large datasets, consider using the search endpoint with pagination
+    - Response may be large, use with caution in production
+    """
+    return await property_service.get_all_properties(db)
+
+
+@router.get(
+    "/",
     response_model=PropertySearchResponse,
     summary="Search properties",
     description="Search properties with advanced filtering, sorting, and pagination",
+    responses={
+        200: {
+            "description": "Successful property search with pagination",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "items": [
+                            {
+                                "id": "550e8400-e29b-41d4-a716-446655440000",
+                                "title": "3-комнатная квартира в ЖК 'Пресня Сити'",
+                                "property_type": "APARTMENT",
+                                "deal_type": "SALE",
+                                "price": "15000000.00",
+                                "price_per_sqm": "180000.00",
+                                "currency": "RUB",
+                                "city": "Москва",
+                                "district": "Пресненский",
+                                "total_area": 83.5,
+                                "rooms_count": 3,
+                                "floor": 15,
+                                "total_floors": 25,
+                                "has_parking": True,
+                                "renovation_type": "EURO",
+                                "status": "ACTIVE",
+                                "is_featured": False,
+                                "views_count": 245,
+                                "favorites_count": 12,
+                                "main_image_url": "https://example.com/image.jpg",
+                                "developer_id": "550e8400-e29b-41d4-a716-446655440001",
+                                "developer_name": "ПИК",
+                                "developer_verified": True,
+                                "created_at": "2024-01-15T10:30:00Z",
+                                "updated_at": "2024-01-15T10:30:00Z"
+                            }
+                        ],
+                        "pagination": {
+                            "page": 1,
+                            "limit": 20,
+                            "total": 156,
+                            "pages": 8,
+                            "has_next": True,
+                            "has_prev": False,
+                            "next_page": 2,
+                            "prev_page": None
+                        },
+                        "search_time_ms": 45.2,
+                        "filters_applied": {
+                            "city": "Москва",
+                            "rooms": "3",
+                            "has_parking": True
+                        },
+                        "search_query": "Пресня"
+                    }
+                }
+            }
+        }
+    }
 )
 async def search_properties(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     property_type: Optional[str] = Query(
         None, description="Property type (APARTMENT, HOUSE, COMMERCIAL)"
     ),
     deal_type: Optional[str] = Query(None, description="Deal type (SALE, RENT)"),
+    # New type filter with numeric mapping
+    type: Optional[str] = Query(None, description="Property type: 0=дом, 1=квартира, 2=коммерческая"),
     region: Optional[str] = Query(None, description="Region filter"),
     city: Optional[str] = Query(None, description="City filter"),
     district: Optional[str] = Query(None, description="District filter"),
@@ -64,10 +191,22 @@ async def search_properties(
     rooms_count: Optional[str] = Query(
         None, description="Room counts (comma-separated: 1,2,3)"
     ),
+    # New rooms filter with 4+ logic
+    rooms: Optional[str] = Query(
+        None, description="Rooms filter: single number or comma-separated (1,2,3,4). If 4+ specified, includes 4 and more"
+    ),
     has_parking: Optional[bool] = Query(None, description="Has parking"),
     has_balcony: Optional[bool] = Query(None, description="Has balcony"),
     has_elevator: Optional[bool] = Query(None, description="Has elevator"),
     renovation_type: Optional[str] = Query(None, description="Renovation type"),
+    # New peculiarity filter
+    peculiarity: Optional[str] = Query(
+        None, description="Comma-separated peculiarities: balcony,parking,playground,gym,ac,appliances,concierge,furniture"
+    ),
+    # New verify filter
+    verify: Optional[str] = Query(
+        None, description="Verification filters: verified,ai"
+    ),
     building_year_min: Optional[int] = Query(
         None, ge=1800, description="Minimum building year"
     ),
@@ -81,11 +220,12 @@ async def search_properties(
         None, description="Developer verification filter"
     ),
     is_featured: Optional[bool] = Query(None, description="Featured properties only"),
+    # Enhanced sort options
     sort: Optional[str] = Query(
-        "created_desc",
-        description="Sort by: price_asc, price_desc, created_desc, area_asc, area_desc, popular",
+        "date_desc",
+        description="Sort by: price_asc, price_desc, date_desc, date_asc, area_asc, area_desc, popular",
     ),
-    search: Optional[str] = Query(None, description="Free text search"),
+    search: Optional[str] = Query(None, description="Free text search in titles and other text fields"),
     lat: Optional[float] = Query(
         None, ge=-90, le=90, description="Latitude for geographic search"
     ),
@@ -98,27 +238,103 @@ async def search_properties(
     """
     Search properties with advanced filtering and pagination.
 
-    **Query parameters:**
-    - **page**: Page number (default: 1)
-    - **limit**: Items per page (default: 20, max: 100)
-    - **property_type**: APARTMENT, HOUSE, COMMERCIAL
-    - **deal_type**: SALE, RENT
-    - **region, city, district**: Location filters
-    - **price_min, price_max**: Price range filters
-    - **total_area_min, total_area_max**: Area range filters
-    - **rooms_count**: Comma-separated list (e.g., "1,2,3")
-    - **has_parking, has_balcony, has_elevator**: Boolean feature filters
-    - **renovation_type**: NONE, COSMETIC, EURO, DESIGNER
-    - **building_year_min, building_year_max**: Building year range
-    - **floor_min, floor_max**: Floor range
-    - **developer_id**: Filter by specific developer
-    - **developer_verified**: Filter by developer verification status
-    - **is_featured**: Show only featured properties
-    - **sort**: Sorting option
-    - **search**: Free text search in title, description, address
-    - **lat, lng, radius**: Geographic search
+    **Pagination parameters:**
+    - **page**: Page number (default: 1, min: 1)
+    - **limit**: Items per page (default: 20, min: 1, max: 100)
 
-    Returns paginated search results with metadata.
+    **Basic filters:**
+    - **property_type**: Property type (APARTMENT, HOUSE, COMMERCIAL)
+    - **deal_type**: Deal type (SALE, RENT)
+    - **type**: Numeric property type mapping (0=дом, 1=квартира, 2=коммерческая)
+
+    **Location filters:**
+    - **region**: Filter by region name (partial match)
+    - **city**: Filter by city name (partial match)
+    - **district**: Filter by district name (partial match)
+
+    **Price filters:**
+    - **price_min**: Minimum price in rubles (≥ 0)
+    - **price_max**: Maximum price in rubles (≥ 0)
+
+    **Area filters:**
+    - **total_area_min**: Minimum total area in square meters (> 0)
+    - **total_area_max**: Maximum total area in square meters (> 0)
+
+    **Room filters:**
+    - **rooms_count**: Legacy comma-separated room counts (e.g., "1,2,3")
+    - **rooms**: Enhanced rooms filter with 4+ logic (e.g., "1,2,3,4")
+      If "4" is specified, includes all properties with 4+ rooms
+
+    **Feature filters:**
+    - **has_parking**: Has parking space (true/false)
+    - **has_balcony**: Has balcony or loggia (true/false)
+    - **has_elevator**: Has elevator (true/false)
+    - **renovation_type**: Renovation type (NONE, COSMETIC, EURO, DESIGNER)
+
+    **Advanced feature filters:**
+    - **peculiarity**: Comma-separated special features:
+      - balcony: Balкон/лоджия
+      - furniture: Мебель
+      - parking: Парковка
+      - gym: Фитнес-зал
+      - ac: Кондиционер
+      - appliances: Техника
+      - concierge: Консьерж
+      - playground: Детская площадка
+
+    **Developer filters:**
+    - **developer_id**: Filter by specific developer UUID
+    - **developer_verified**: Show only verified developers (true/false)
+    - **verify**: Verification filters (comma-separated):
+      - verified: Верифицированные застройщики
+      - ai: ИИ-оценка цены
+
+    **Building filters:**
+    - **building_year_min**: Minimum building year (≥ 1800)
+    - **building_year_max**: Maximum building year (≤ 2100)
+    - **floor_min**: Minimum floor number (≥ 1)
+    - **floor_max**: Maximum floor number (≥ 1)
+
+    **Status filters:**
+    - **is_featured**: Show only featured properties (true/false)
+
+    **Sorting options:**
+    - **sort**: Sort order (default: date_desc)
+      - price_asc: Сначала дешевые
+      - price_desc: Сначала дорогие
+      - date_desc (data_desc): Сначала новые
+      - date_asc (data_asc): Сначала старые
+      - area_asc: По площади (возрастание)
+      - area_desc: По площади (убывание)
+      - popular: По популярности (просмотры + избранное)
+
+    **Search:**
+    - **search**: Free text search in title, description, and address fields
+      Supports partial matching and is case-insensitive
+
+    **Geographic search:**
+    - **lat**: Latitude for geographic search (-90 to 90)
+    - **lng**: Longitude for geographic search (-180 to 180)
+    - **radius**: Search radius in kilometers (1 to 50)
+      All three parameters must be provided for geographic search
+
+    **Response format:**
+    Returns PropertySearchResponse with:
+    - **items**: Array of property objects
+    - **pagination**: Pagination metadata (page, total, has_next, etc.)
+    - **search_time_ms**: Search execution time in milliseconds
+    - **filters_applied**: Summary of applied filters
+    - **search_query**: Search query used (if any)
+
+    **Usage examples:**
+    - `/properties?city=Москва&rooms=2,3&has_parking=true&sort=price_asc`
+    - `/properties?type=1&peculiarity=balcony,parking&verify=verified`
+    - `/properties?search=ЖК&price_min=5000000&price_max=15000000`
+    - `/properties?lat=55.7558&lng=37.6176&radius=5`
+
+    **Filter combinations:**
+    All filters can be combined. The search uses AND logic between different
+    filter types and OR logic within the same filter type (e.g., multiple rooms).
     """
     # Parse rooms_count
     rooms_list = None
@@ -144,6 +360,7 @@ async def search_properties(
         limit=limit,
         property_type=property_type,
         deal_type=deal_type,
+        type=type,  # New numeric type filter
         region=region,
         city=city,
         district=district,
@@ -152,10 +369,13 @@ async def search_properties(
         total_area_min=total_area_min,
         total_area_max=total_area_max,
         rooms_count=rooms_list,
+        rooms=rooms,  # New rooms filter with 4+ logic
         has_parking=has_parking,
         has_balcony=has_balcony,
         has_elevator=has_elevator,
         renovation_type=renovation_type,
+        peculiarity=peculiarity,  # New peculiarity filter
+        verify=verify,  # New verify filter
         building_year_min=building_year_min,
         building_year_max=building_year_max,
         floor_min=floor_min,
@@ -574,17 +794,8 @@ async def delete_property_image(
             },
         )
 
-    # Implementation would go here
-    # For now, return a placeholder response
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail={
-            "error": {
-                "code": "NOT_IMPLEMENTED",
-                "message": "Функция удаления изображений будет реализована позже",
-                "details": {},
-            }
-        },
+    await property_service.delete_property_image(
+        db, property_id, image_id, str(current_user.developer_profile.id)
     )
 
 
@@ -622,15 +833,6 @@ async def delete_property_document(
             },
         )
 
-    # Implementation would go here
-    # For now, return a placeholder response
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail={
-            "error": {
-                "code": "NOT_IMPLEMENTED",
-                "message": "Функция удаления документов будет реализована позже",
-                "details": {},
-            }
-        },
+    await property_service.delete_property_document(
+        db, property_id, document_id, str(current_user.developer_profile.id)
     )

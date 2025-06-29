@@ -96,7 +96,7 @@ class ClickHouseManager:
         ) ENGINE = MergeTree()
         PARTITION BY toYYYYMM(date)
         ORDER BY (property_id, timestamp)
-        SETTINGS index_granularity = 8192
+        SETTINGS index_granularity = 8192, allow_nullable_key = 1
         """
         
         # Search analytics
@@ -114,8 +114,8 @@ class ClickHouseManager:
             date Date MATERIALIZED toDate(timestamp)
         ) ENGINE = MergeTree()
         PARTITION BY toYYYYMM(date)
-        ORDER BY (timestamp, user_id)
-        SETTINGS index_granularity = 8192
+        ORDER BY (timestamp, session_id)
+        SETTINGS index_granularity = 8192, allow_nullable_key = 1
         """
         
         # User behavior analytics

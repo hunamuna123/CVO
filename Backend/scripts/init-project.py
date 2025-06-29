@@ -35,7 +35,7 @@ def create_env_file():
 ENVIRONMENT=development
 DEBUG=True
 APP_NAME="Real Estate API"
-VERSION=0.1.0
+VERSION=1.0.0
 
 # Security Keys (CHANGE THESE IN PRODUCTION!)
 SECRET_KEY={generate_secret_key()}

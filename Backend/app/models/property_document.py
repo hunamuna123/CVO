@@ -3,8 +3,10 @@ PropertyDocument model for property documents.
 """
 
 import enum
+from uuid import UUID as PyUUID
 
 from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -30,7 +32,8 @@ class PropertyDocument(BaseModel):
     __tablename__ = "property_documents"
 
     # Property relationship
-    property_id: Mapped[str] = mapped_column(
+    property_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -63,7 +66,7 @@ class PropertyDocument(BaseModel):
     )
 
     # Relationships
-    property: Mapped["Property"] = relationship("Property", back_populates="documents")
+    property_obj: Mapped["Property"] = relationship("Property", back_populates="documents")
 
     def __repr__(self) -> str:
         """String representation."""

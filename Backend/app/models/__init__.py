@@ -3,9 +3,18 @@ Models package.
 """
 
 from app.models.base import BaseModel
+from app.models.booking import Booking, BookingSource, BookingStatus
+from app.models.complex import Complex, ComplexClass, ComplexStatus
+from app.models.complex_image import ComplexImage
 from app.models.developer import Developer, VerificationStatus
+from app.models.dynamic_pricing import (
+    DynamicPricing,
+    PriceChangeReason,
+    PricingStrategy,
+)
 from app.models.favorite import Favorite
 from app.models.lead import Lead, LeadStatus, LeadType
+from app.models.promo_code import PromoCode, PromoCodeStatus, PromoCodeType
 from app.models.property import (
     DealType,
     Property,
@@ -41,4 +50,17 @@ __all__ = [
     "Lead",
     "LeadType",
     "LeadStatus",
+    "Complex",
+    "ComplexClass",
+    "ComplexStatus",
+    "ComplexImage",
+    "Booking",
+    "BookingStatus",
+    "BookingSource",
+    "PromoCode",
+    "PromoCodeType",
+    "PromoCodeStatus",
+    "DynamicPricing",
+    "PricingStrategy",
+    "PriceChangeReason",
 ]

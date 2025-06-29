@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # Application settings
     app_name: str = Field(default="Real Estate API", description="Application name")
-    version: str = Field(default="0.1.0", description="Application version")
+    version: str = Field(default="1.0.0", description="Application version")
     environment: str = Field(default="development", description="Environment")
     debug: bool = Field(default=True, description="Debug mode")
     secret_key: str = Field(description="Application secret key")
@@ -87,7 +87,7 @@ class Settings(BaseSettings):
 
     # CORS settings
     allowed_origins: str = Field(
-        default="http://localhost:3000,http://localhost:8080",
+        default="*",
         description="Allowed CORS origins (comma-separated)",
     )
     allowed_methods: str = Field(
@@ -211,6 +211,12 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         """Get database URL as string."""
         return str(self.database_url)
+    
+    def get_sync_database_url(self) -> str:
+        """Get synchronous database URL for testing/migration purposes."""
+        url = str(self.database_url)
+        # Convert asyncpg to psycopg2 for sync operations
+        return url.replace("postgresql+asyncpg://", "postgresql://")
 
     def get_redis_url(self) -> str:
         """Get Redis URL as string."""

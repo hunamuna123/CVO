@@ -102,6 +102,10 @@ class User(BaseModel):
         "Lead", back_populates="user", cascade="all, delete-orphan"
     )
 
+    bookings: Mapped[List["Booking"]] = relationship(
+        "Booking", back_populates="user", cascade="all, delete-orphan"
+    )
+
     # Methods
     @property
     def full_name(self) -> str:
