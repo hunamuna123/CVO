@@ -3,8 +3,10 @@ SearchHistory model for search history tracking.
 """
 
 from typing import Any, Dict, Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import JSON, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -21,7 +23,8 @@ class SearchHistory(BaseModel):
     __tablename__ = "search_history"
 
     # User relationship (optional for anonymous users)
-    user_id: Mapped[Optional[str]] = mapped_column(
+    user_id: Mapped[Optional[PyUUID]] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
         index=True,

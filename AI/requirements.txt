@@ -1,0 +1,44 @@
+# AI Requirements for Real Estate Analysis Platform - Python 3.13 Compatible
+# Core ML/AI Frameworks
+numpy>=1.24.0
+pandas>=2.1.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+joblib>=1.3.0
+
+# Core ML Libraries
+xgboost>=2.0.0
+lightgbm>=4.1.0
+catboost>=1.2.0
+optuna>=3.4.0
+
+# Deep Learning (PyTorch - stable for Python 3.13)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Time Series
+prophet>=1.1.5
+statsmodels>=0.14.0
+
+# Model Management and MLOps
+mlflow>=2.8.0
+
+# Data Processing and Analysis
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# Geospatial Analysis
+geopy>=2.3.0
+
+# Collaborative Filtering
+implicit>=0.7.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+cloudpickle>=3.0.0
+
+# Development and Testing
+pytest>=7.4.0
+black>=23.11.0

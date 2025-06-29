@@ -31,7 +31,7 @@ favorite_service = FavoriteService()
 )
 async def get_user_favorites(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    limit: int = Query(6, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> List[FavoriteListResponse]:

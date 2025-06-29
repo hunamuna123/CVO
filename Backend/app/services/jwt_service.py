@@ -151,7 +151,7 @@ class JWTService:
             return False
 
         except Exception as e:
-            logger.error("Error blacklisting token", error=str(e))
+            logger.error("Error blacklisting token: %s", str(e))
             return False
 
     def create_token_pair(self, user_id: str) -> Dict[str, str]:

@@ -4,8 +4,10 @@ Lead model for user leads/inquiries.
 
 import enum
 from typing import Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import Enum, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -39,7 +41,8 @@ class Lead(BaseModel):
     __tablename__ = "leads"
 
     # Property relationship
-    property_id: Mapped[str] = mapped_column(
+    property_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -47,7 +50,8 @@ class Lead(BaseModel):
     )
 
     # User relationship (optional for anonymous leads)
-    user_id: Mapped[Optional[str]] = mapped_column(
+    user_id: Mapped[Optional[PyUUID]] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -85,7 +89,7 @@ class Lead(BaseModel):
     )
 
     # Relationships
-    property: Mapped["Property"] = relationship("Property", back_populates="leads")
+    property_obj: Mapped["Property"] = relationship("Property", back_populates="leads")
 
     user: Mapped[Optional["User"]] = relationship("User", back_populates="leads")
 

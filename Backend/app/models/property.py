@@ -6,6 +6,7 @@ import enum
 from datetime import date
 from decimal import Decimal
 from typing import List, Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import (
     Boolean,
@@ -18,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -69,11 +71,21 @@ class Property(BaseModel):
     __tablename__ = "properties"
 
     # Developer relationship
-    developer_id: Mapped[str] = mapped_column(
+    developer_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("developers.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         comment="FK to Developer",
+    )
+
+    # Complex relationship (optional)
+    complex_id: Mapped[Optional[PyUUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("complexes.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="FK to Complex (optional)",
     )
 
     # Basic information
@@ -241,29 +253,41 @@ class Property(BaseModel):
 
     images: Mapped[List["PropertyImage"]] = relationship(
         "PropertyImage",
-        back_populates="property",
+        back_populates="property_obj",
         cascade="all, delete-orphan",
         order_by="PropertyImage.order",
     )
 
     documents: Mapped[List["PropertyDocument"]] = relationship(
-        "PropertyDocument", back_populates="property", cascade="all, delete-orphan"
+        "PropertyDocument", back_populates="property_obj", cascade="all, delete-orphan"
     )
 
     favorites: Mapped[List["Favorite"]] = relationship(
-        "Favorite", back_populates="property", cascade="all, delete-orphan"
+        "Favorite", back_populates="property_obj", cascade="all, delete-orphan"
     )
 
     view_history: Mapped[List["ViewHistory"]] = relationship(
-        "ViewHistory", back_populates="property", cascade="all, delete-orphan"
+        "ViewHistory", back_populates="property_obj", cascade="all, delete-orphan"
     )
 
     leads: Mapped[List["Lead"]] = relationship(
-        "Lead", back_populates="property", cascade="all, delete-orphan"
+        "Lead", back_populates="property_obj", cascade="all, delete-orphan"
     )
 
     reviews: Mapped[List["Review"]] = relationship(
-        "Review", back_populates="property", cascade="all, delete-orphan"
+        "Review", back_populates="property_obj", cascade="all, delete-orphan"
+    )
+
+    complex: Mapped[Optional["Complex"]] = relationship(
+        "Complex", back_populates="properties"
+    )
+
+    bookings: Mapped[List["Booking"]] = relationship(
+        "Booking", back_populates="property_obj", cascade="all, delete-orphan"
+    )
+
+    pricing_history: Mapped[List["DynamicPricing"]] = relationship(
+        "DynamicPricing", back_populates="property_obj", cascade="all, delete-orphan"
     )
 
     # Methods

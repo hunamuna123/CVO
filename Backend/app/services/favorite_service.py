@@ -50,8 +50,8 @@ class FavoriteService:
         query = (
             select(Favorite)
             .options(
-                selectinload(Favorite.property).selectinload(Property.developer),
-                selectinload(Favorite.property).selectinload(Property.images),
+                selectinload(Favorite.property_obj).selectinload(Property.developer),
+                selectinload(Favorite.property_obj).selectinload(Property.images),
             )
             .where(Favorite.user_id == UUID(user_id))
             .order_by(Favorite.created_at.desc())
@@ -65,27 +65,27 @@ class FavoriteService:
         # Convert to response format
         favorite_responses = []
         for favorite in favorites:
-            if favorite.property:  # Ensure property still exists
+            if favorite.property_obj:  # Ensure property still exists
                 property_data = {
-                    "id": str(favorite.property.id),
-                    "title": favorite.property.title,
-                    "price": float(favorite.property.price) if favorite.property.price else None,
-                    "city": favorite.property.city,
-                    "property_type": favorite.property.property_type,
-                    "total_area": float(favorite.property.total_area) if favorite.property.total_area else None,
-                    "rooms_count": favorite.property.rooms_count,
+                    "id": str(favorite.property_obj.id),
+                    "title": favorite.property_obj.title,
+                    "price": float(favorite.property_obj.price) if favorite.property_obj.price else None,
+                    "city": favorite.property_obj.city,
+                    "property_type": favorite.property_obj.property_type,
+                    "total_area": float(favorite.property_obj.total_area) if favorite.property_obj.total_area else None,
+                    "rooms_count": favorite.property_obj.rooms_count,
                     "main_image_url": None,
                     "developer": {
-                        "id": str(favorite.property.developer.id),
-                        "company_name": favorite.property.developer.company_name,
-                    } if favorite.property.developer else None,
+                        "id": str(favorite.property_obj.developer.id),
+                        "company_name": favorite.property_obj.developer.company_name,
+                    } if favorite.property_obj.developer else None,
                 }
 
                 # Get main image
-                if favorite.property.images:
+                if favorite.property_obj.images:
                     main_image = next(
-                        (img for img in favorite.property.images if img.is_main),
-                        favorite.property.images[0] if favorite.property.images else None
+                        (img for img in favorite.property_obj.images if img.is_main),
+                        favorite.property_obj.images[0] if favorite.property_obj.images else None
                     )
                     if main_image:
                         property_data["main_image_url"] = main_image.url

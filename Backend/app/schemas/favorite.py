@@ -4,6 +4,7 @@ Favorite-related Pydantic schemas.
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -11,13 +12,13 @@ from pydantic import BaseModel, Field
 class FavoriteCreateRequest(BaseModel):
     """Schema for creating a favorite."""
 
-    property_id: str = Field(..., description="Property UUID")
+    property_id: UUID = Field(..., description="Property UUID")
 
 
 class PropertyInfo(BaseModel):
     """Property information for favorites."""
 
-    id: str
+    id: UUID
     title: str
     price: Optional[float] = None
     city: str
@@ -31,9 +32,11 @@ class PropertyInfo(BaseModel):
 class FavoriteResponse(BaseModel):
     """Schema for favorite response."""
 
-    id: str
-    user_id: str
-    property_id: str
+    id: UUID
+    user_id: UUID
+
+    property_id: UUID
+
     created_at: datetime
 
     class Config:
@@ -43,8 +46,8 @@ class FavoriteResponse(BaseModel):
 class FavoriteListResponse(BaseModel):
     """Schema for favorite list item."""
 
-    id: str
-    property_id: str
+    id: UUID
+    property_id: UUID
     created_at: datetime
     property: PropertyInfo
 

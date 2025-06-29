@@ -3,8 +3,10 @@ Review model for user reviews.
 """
 
 from typing import Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -21,27 +23,30 @@ class Review(BaseModel):
     __tablename__ = "reviews"
 
     # User relationship
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         comment="FK to User",
     )
 
-    # Developer relationship
-    developer_id: Mapped[str] = mapped_column(
-        ForeignKey("developers.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-        comment="FK to Developer",
-    )
-
     # Property relationship (optional)
-    property_id: Mapped[Optional[str]] = mapped_column(
+    property_id: Mapped[Optional[PyUUID]] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
         comment="FK to Property (optional)",
+    )
+
+    # Developer relationship
+    developer_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("developers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="FK to Developer",
     )
 
     # Review content
@@ -62,7 +67,7 @@ class Review(BaseModel):
 
     developer: Mapped["Developer"] = relationship("Developer", back_populates="reviews")
 
-    property: Mapped[Optional["Property"]] = relationship(
+    property_obj: Mapped[Optional["Property"]] = relationship(
         "Property", back_populates="reviews"
     )
 

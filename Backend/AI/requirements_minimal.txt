@@ -1,0 +1,38 @@
+# Minimal AI Requirements for Training - Python 3.13 Compatible
+
+# Core Data Science
+numpy>=1.24.0
+pandas>=2.1.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# Machine Learning Models
+xgboost>=2.0.0
+lightgbm>=4.1.0
+catboost>=1.2.0
+
+# Deep Learning (PyTorch only for now)
+torch>=2.2.0
+torchvision>=0.17.0
+
+# Time Series
+prophet>=1.1.5
+statsmodels>=0.14.0
+
+# Hyperparameter Optimization
+optuna>=3.4.0
+
+# MLflow for experiment tracking
+mlflow>=2.8.0
+
+# Utilities
+tqdm>=4.66.0
+joblib>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Collaborative Filtering
+implicit>=0.7.0
+
+# Geospatial (basic)
+geopy>=2.4.0

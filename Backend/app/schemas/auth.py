@@ -4,6 +4,7 @@ Authentication schemas for request and response validation.
 
 import re
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
@@ -145,7 +146,7 @@ class RefreshResponse(BaseModel):
 class UserResponse(BaseModel):
     """Response schema for user information."""
 
-    id: str = Field(
+    id: UUID = Field(
         ..., description="User ID", example="550e8400-e29b-41d4-a716-446655440000"
     )
     phone: str = Field(..., description="Phone number", example="+79999999999")

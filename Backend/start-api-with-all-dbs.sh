@@ -9,7 +9,7 @@ echo "🏠 Starting Real Estate API with all database configurations..."
 export ENVIRONMENT=development
 export DEBUG=True
 export APP_NAME="Real Estate API"
-export VERSION=0.1.0
+export VERSION=1.0.0
 
 # Database Configuration
 export DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/realestate
@@ -67,6 +67,15 @@ export CLICKHOUSE_PORT=9000
 export CLICKHOUSE_DATABASE=realestate_analytics
 export CLICKHOUSE_USER=default
 export CLICKHOUSE_PASSWORD=password
+
+# AI Configuration
+export AI_ENVIRONMENT=development
+export AI_DEBUG=true
+export AI_USE_GPU=false
+export AI_BATCH_SIZE=32
+export AI_MAX_EPOCHS=100
+export MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+export MLFLOW_EXPERIMENT_NAME=real_estate_ai
 
 # Monitoring and Logging
 export LOG_LEVEL=INFO

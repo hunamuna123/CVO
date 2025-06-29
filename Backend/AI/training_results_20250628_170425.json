@@ -1,0 +1,75 @@
+{
+  "price_prediction": {
+    "ensemble": {
+      "rmse": 3666504.099230696,
+      "mae": 1946725.4311041527,
+      "r2": 0.5567780973430072,
+      "mape": 28.160780501186945
+    },
+    "xgboost": {
+      "rmse": 3034781.1722415835,
+      "mae": 1577716.0,
+      "r2": 0.696351170539856,
+      "mape": 27.80072131092217
+    },
+    "lightgbm": {
+      "rmse": 2954744.017165012,
+      "mae": 1575936.2069276106,
+      "r2": 0.7121563932293828,
+      "mape": 27.730082096969504
+    },
+    "catboost": {
+      "rmse": 2975237.429680521,
+      "mae": 1560620.7348311015,
+      "r2": 0.708149714866827,
+      "mape": 28.31515216055741
+    },
+    "pytorch": {
+      "rmse": 8038446.177701758,
+      "mae": 5855696.0,
+      "r2": -1.1303997039794922,
+      "mape": 99.99392903224789
+    }
+  },
+  "individual_models": {
+    "xgboost": {
+      "rmse": 2687308.7598830173,
+      "mae": 1477474.25,
+      "r2": 0.7619040608406067,
+      "mape": 27.321636401181927
+    },
+    "lightgbm": {
+      "rmse": 2916377.000666872,
+      "mae": 1574535.6415404773,
+      "r2": 0.7195830939834511,
+      "mape": 27.374415061099526
+    },
+    "catboost": {
+      "rmse": 2859901.052975592,
+      "mae": 1530761.2600094485,
+      "r2": 0.7303385414175678,
+      "mape": 27.96395430560836
+    },
+    "pytorch": {
+      "rmse": 8038022.480816535,
+      "mae": 5855327.5,
+      "r2": -1.1301751136779785,
+      "mape": 99.98665546495137
+    }
+  },
+  "demand_analysis": {
+    "error": "cannot insert date, already exists"
+  },
+  "recommendation": {
+    "model_type": "collaborative",
+    "training_status": "completed",
+    "n_interactions": 1272
+  },
+  "visualization_paths": {
+    "data_overview": "visualizations/data_overview.png",
+    "model_comparison": "visualizations/model_comparison.png",
+    "dashboard": "visualizations/interactive_dashboard.html",
+    "report": "visualizations/training_report.html",
+    "summary": "visualizations/results_summary.json"
+  }
+}

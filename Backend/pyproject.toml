@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "realestate-api"
-version = "0.1.0"
+version = "1.0.0"
 description = "Professional Real Estate Platform Backend API"
 authors = ["Fukuyama Keiske <verve@is-god.ru>"]
 readme = "README.md"
@@ -19,14 +19,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12",
     "Framework :: FastAPI",
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.12"
 fastapi = "^0.104.1"
 uvicorn = {extras = ["standard"], version = "^0.24.0"}
 pydantic = {extras = ["email"], version = "^2.5.0"}
@@ -58,7 +58,7 @@ beanie = "^1.23.6"
 # ClickHouse support
 clickhouse-driver = "^0.2.6"
 # Kafka support
-aiokafka = "^0.10.0"
+aiokafka = "0.10.0"
 kafka-python = "^2.0.2"
 # Monitoring and observability
 prometheus-fastapi-instrumentator = "^6.1.0"
@@ -70,6 +70,23 @@ sentry-sdk = {extras = ["fastapi"], version = "^1.38.0"}
 geopy = "^2.4.0"
 sentence-transformers = "^2.2.2"
 numpy = "^1.25.2"
+pandas = "^2.3.0"
+xgboost = "^3.0.2"
+lightgbm = "^4.6.0"
+scikit-learn = "^1.7.0"
+torch = "^2.7.1"
+torchvision = "^0.22.1"
+optuna = "^4.4.0"
+mlflow = "^3.1.1"
+joblib = "^1.5.1"
+matplotlib = "^3.10.3"
+seaborn = "^0.13.2"
+catboost = "^1.2.8"
+prophet = "^1.1.7"
+statsmodels = "^0.14.4"
+implicit = "^0.7.2"
+cloudpickle = "^3.1.1"
+tqdm = "^4.67.1"
 
 [tool.poetry.scripts]
 dev = "scripts:dev"
@@ -120,7 +137,7 @@ line_length = 88
 skip_glob = ["**/migrations/*.py"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.12"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true

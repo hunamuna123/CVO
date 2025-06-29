@@ -3,10 +3,12 @@ Developer model for real estate developers.
 """
 
 import enum
-from decimal import Decimal
 from typing import List, Optional
+from decimal import Decimal
+from uuid import UUID as PyUUID
 
 from sqlalchemy import Boolean, Enum, ForeignKey, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import *
@@ -32,7 +34,8 @@ class Developer(BaseModel):
     __tablename__ = "developers"
 
     # User relationship
-    user_id: Mapped[str] = mapped_column(
+    user_id: Mapped[PyUUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
@@ -117,6 +120,18 @@ class Developer(BaseModel):
 
     reviews: Mapped[List["Review"]] = relationship(
         "Review", back_populates="developer", cascade="all, delete-orphan"
+    )
+
+    complexes: Mapped[List["Complex"]] = relationship(
+        "Complex", back_populates="developer", cascade="all, delete-orphan"
+    )
+
+    bookings: Mapped[List["Booking"]] = relationship(
+        "Booking", back_populates="developer", cascade="all, delete-orphan"
+    )
+
+    promo_codes: Mapped[List["PromoCode"]] = relationship(
+        "PromoCode", back_populates="developer", cascade="all, delete-orphan"
     )
 
     # Methods

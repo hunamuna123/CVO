@@ -300,7 +300,7 @@ start_api() {
     
     # Start API with Poetry
     cd /home/keiske/CVO/Backend
-    poetry run uvicorn app.main:app --host 0.0.0.0 --port $API_PORT --log-level info > "$API_LOG_FILE" 2>&1 &
+    poetry run uvicorn app.main:app --host 0.0.0.0 --port $API_PORT --reload --log-level info > "$API_LOG_FILE" 2>&1 &
     local api_pid=$!
     echo "$api_pid" > "$API_PID_FILE"
     
